@@ -19,7 +19,7 @@ final class DayEntry {
     @Attribute(.unique) var id: UUID
 
     // Day key (normalized to start-of-day in the user’s local calendar)
-    @Attribute(.indexed) var day: Date
+    var day: Date
 
     // Content
     var taskText: String
