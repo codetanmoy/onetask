@@ -22,6 +22,7 @@ struct HomeTaskBlock: View {
                     .font(.title2)
                     .fontWeight(.semibold)
                     .textInputAutocapitalization(.sentences)
+                    .frame(maxWidth: .infinity, alignment: .leading)
                     .disableAutocorrection(false)
                     .submitLabel(.done)
                     .onChange(of: viewModel.state.taskDraft) { _, newValue in
@@ -41,4 +42,3 @@ struct HomeTaskBlock: View {
         )
     }
 }
-

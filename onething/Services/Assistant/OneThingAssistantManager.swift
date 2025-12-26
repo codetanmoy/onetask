@@ -1,28 +1,11 @@
 import Foundation
 import Combine
 import SwiftUI
+import FoundationModels
 
 @MainActor
 final class OneThingAssistantManager: ObservableObject {
-    static let systemPrompt: String = """
-    You are OneThing Assistant.
-    Your role is to help users understand and use the OneThing app.
-    OneThing supports one task per day, one timer, and one completion.
-    Keep responses short, calm, and practical.
-    Reduce choice. Convert vague tasks into one clear line.
-    If a task is too big, shrink it into a smaller single outcome (not steps).
-    Clarify the next action inside the app (set task, start timer, mark done).
-    Refuse multi-task planning and redirect back to one thing.
-    Ask at most one question.
-    Do not provide medical, mental health, or therapeutic advice.
-    Do not propose features outside the app’s scope (task lists, app blocking, schedules).
-    Use only the app-provided context.
-    If information is unavailable, say so plainly.
-    Never shame the user.
-    Do not store or recall personal chat content.
-    """
-
-        struct Message: Identifiable, Equatable {
+    struct Message: Identifiable, Equatable {
         enum Kind: Equatable {
             case text
             case menu
@@ -108,47 +91,53 @@ final class OneThingAssistantManager: ObservableObject {
         return out
     }
 
+    private func normalizedTaskText(from text: String) -> String? {
+        let candidate = rewriteTask(stripTaskPrefixes(from: text))
+        guard candidate.contains("Example:") == false else { return nil }
+        return candidate
+    }
+
+    private func stripTaskPrefixes(from text: String) -> String {
+        let lower = text.lowercased()
+        let prefixes = [
+            "today:",
+            "task:",
+            "my one thing is",
+            "one thing is",
+            "my task is",
+            "today -",
+            "today —",
+        ]
+        for prefix in prefixes {
+            if lower.hasPrefix(prefix) {
+                let start = text.index(text.startIndex, offsetBy: prefix.count)
+                return String(text[start...]).trimmingCharacters(in: .whitespacesAndNewlines)
+            }
+        }
+        return text
+    }
+
     private func generateReply(userText: String, context: AssistantContext?, actions: Actions) async -> Reply {
-        // If the user asks for planning or lists, refuse gently.
+        // If the user asks for planning or lists, refuse gently via structured clarify intent.
         if violatesScope(userText) {
-            return Reply(kind: .text, text: OneThingAssistantGuardrails.enforce("""
-            I can’t help with schedules or multi-step plans.
-            OneThing is meant for one task and one timer.
-            What is the single task you want to do today?
-            """))
+            let guardrailCommand = IntentParser.Command(
+                intent: .clarify,
+                confidence: 0.6,
+                taskText: "",
+                question: "I can’t help with schedules; what single task would you like?",
+                reason: "Scope guardrail triggered"
+            )
+            let json = intentCommandJSON(guardrailCommand)
+            return Reply(kind: .text, text: json)
         }
 
         if let guided = await handleGuidedFlow(userText: userText, context: context, actions: actions) {
             return Reply(kind: guided.kind, text: OneThingAssistantGuardrails.enforce(guided.text))
         }
 
-        // If we have no model support, fallback to rule-based answers.
-        switch FoundationModelManager.availability {
-        case let .unavailable(reason):
-            let fallback = ruleBasedReply(userText: userText, context: context)
-            return Reply(kind: .text, text: OneThingAssistantGuardrails.enforce("""
-            \(reason)
-            \(fallback)
-            """))
-        case .available:
-            break
-        }
-
-        let contextString = context.flatMap(encodeContext) ?? "{}"
-        let user = """
-        AppContext:
-        \(contextString)
-
-        User:
-        \(userText)
-        """
-
-        do {
-            let raw = try await FoundationModelManager.generate(system: Self.systemPrompt, user: user)
-            return Reply(kind: .text, text: OneThingAssistantGuardrails.enforce(raw))
-        } catch {
-            return Reply(kind: .text, text: OneThingAssistantGuardrails.enforce(ruleBasedReply(userText: userText, context: context)))
-        }
+        let command = await parseIntentCommand(userText: userText, context: context)
+        let json = intentCommandJSON(command)
+        return Reply(kind: .text, text: json)
     }
 
     private func handleGuidedFlow(userText: String, context: AssistantContext?, actions: Actions) async -> Reply? {
@@ -182,6 +171,28 @@ final class OneThingAssistantManager: ObservableObject {
                     return Reply(kind: .text, text: """
                     I couldn’t load today’s summary right now.
                     Try again in a moment or pick another date.
+                    """)
+                }
+            }
+            if await wantsToStartTimer(userText: lower, context: context) {
+                guard let taskText = context?.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines), taskText.isEmpty == false else {
+                    return Reply(kind: .text, text: """
+                    Please set your task before starting the timer.
+                    """)
+                }
+                do {
+                    try await actions.startTimer()
+                    flow = .menu
+                    return Reply(kind: .text, text: """
+                    Timer started.
+                    Task set: \(taskText)
+                    Timer is running now. Would you like to stop it?
+                    """)
+                } catch {
+                    flow = .menu
+                    return Reply(kind: .text, text: """
+                    Task is set: \(taskText)
+                    I couldn’t start the timer here.
                     """)
                 }
             }
@@ -250,6 +261,46 @@ final class OneThingAssistantManager: ObservableObject {
         }
     }
 
+    private func wantsToStartTimer(userText: String, context: AssistantContext?) async -> Bool {
+        guard let context else { return false }
+        let task = context.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard task.isEmpty == false, context.today.isRunning == false else { return false }
+
+        let lower = userText.lowercased()
+        let directPhrases = [
+            "start now",
+            "start timer",
+            "start it",
+            "start work",
+            "start the timer",
+            "start doing",
+            "let's start",
+            "go ahead",
+            "i'm ready",
+            "start today"
+        ]
+        if directPhrases.contains(where: lower.contains) { return true }
+        if isAffirmative(lower) { return true }
+
+        guard case .available = FoundationModelManager.availability else { return false }
+        let instruction = """
+        Help classify whether the user is asking to start today’s timer.
+        Answer “Yes” if they want to start it now, otherwise answer “No”.
+        Keep the answer short.
+        """
+        let prompt = """
+        App context: the timer is not running and a task is set for today.
+        User said: “\(userText)”
+        Should you start today’s timer?
+        """
+        do {
+            let response = try await FoundationModelManager.generate(system: instruction, user: prompt)
+            return response.lowercased().contains("yes")
+        } catch {
+            return false
+        }
+    }
+
     private func detailsReply(context: AssistantContext?) -> String {
         guard let context else {
             return """
@@ -273,7 +324,11 @@ final class OneThingAssistantManager: ObservableObject {
     }
 
     private func isAffirmative(_ lower: String) -> Bool {
-        lower == "y" || lower == "yes" || lower == "start" || lower.contains("start")
+        let tokens = [
+            "y", "yes", "yep", "sure", "ok", "okay", "go", "start", "begin",
+            "let's start", "i'm ready", "ready", "sounds good"
+        ]
+        return tokens.contains(where: lower.contains)
     }
 
     private func parseDay(_ lower: String) -> Date? {
@@ -297,69 +352,204 @@ final class OneThingAssistantManager: ObservableObject {
         return forbiddenHints.contains { lower.contains($0) }
     }
 
-    private func ruleBasedReply(userText: String, context: AssistantContext?) -> String {
-        let lower = userText.lowercased()
-
-        if lower.contains("what should i put") || lower.contains("one thing") || lower.contains("task") {
-            return """
-            Pick one concrete action you can finish today.
-            Make it small and specific.
-            What’s the outcome you want by the end?
-            """
+    private func parseIntentCommand(userText: String, context: AssistantContext?) async -> IntentParser.Command {
+        let parserContext = intentParserContext(from: context)
+        guard case .available = FoundationModelManager.availability else {
+            return fallbackIntentCommand(userText: userText, context: parserContext)
         }
 
-        if lower.contains("rewrite") || lower.contains("make it") || lower.contains("simpler") {
-            return """
-            Write it as one action.
-            Example: “Draft the first paragraph.”
-            What’s your current wording?
-            """
+        let prompt = IntentParser.prompt(context: parserContext, userText: userText)
+        do {
+            let raw = try await FoundationModelManager.generate(system: IntentParser.instructions, user: prompt)
+            if let parsed = IntentParser.decodeResponse(raw) {
+                return parsed
+            }
+        } catch {
+            // fall through to fallback
         }
 
-        if lower.contains("how") || lower.contains("works") || lower.contains("why") {
-            return """
-            OneThing keeps it to one task so the next step is obvious.
-            Start the timer when you begin, stop when you pause, then mark done.
-            History is just a small record, not a score.
-            What part should I explain?
-            """
-        }
-
-        if let context {
-            return nextStepFromContext(context)
-        }
-
-        return """
-        Let’s keep it simple.
-        Write one task for today, then start the timer.
-        What’s the one thing you want to do?
-        """
+        return fallbackIntentCommand(userText: userText, context: parserContext)
     }
 
-    private func nextStepFromContext(_ context: AssistantContext) -> String {
-        if context.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
-            return """
-            Add your one task for today.
-            Keep it as a single action.
-            What do you want to write there?
-            """
+    private func intentParserContext(from context: AssistantContext?) -> IntentParser.Context {
+        let hasTask = context?.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
+        let isRunning = context?.today.isRunning ?? false
+        let isCompleted = context?.today.completed ?? false
+        return IntentParser.Context(
+            hasTask: hasTask,
+            isRunning: isRunning,
+            isCompleted: isCompleted,
+            pendingAction: pendingIntentAction
+        )
+    }
+
+    private var pendingIntentAction: IntentParser.Context.PendingAction {
+        switch flow {
+        case .createTaskAwaitStartTimer:
+            return .startTimer
+        default:
+            return .none
         }
-        if context.today.completed {
-            return """
-            You marked it done.
-            If you want another task, tap “Start Another Task”.
-            """
+    }
+
+    private func intentCommandJSON(_ command: IntentParser.Command) -> String {
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = [.sortedKeys]
+        guard let data = try? encoder.encode(command), let json = String(data: data, encoding: .utf8) else {
+            return "{}"
         }
-        if context.today.isRunning {
-            return """
-            The timer is running.
-            Stop it when you’re done working, then mark done.
-            """
+        return json
+    }
+
+    private func fallbackIntentCommand(userText: String, context: IntentParser.Context) -> IntentParser.Command {
+        let lower = userText.lowercased()
+        let trimmed = userText.trimmingCharacters(in: .whitespacesAndNewlines)
+
+        if context.pendingAction == .startTimer, isAffirmative(lower) {
+            return IntentParser.Command(
+                intent: .start_timer,
+                confidence: 0.82,
+                taskText: "",
+                question: "",
+                reason: "Confirmed pending start"
+            )
         }
-        return """
-        Your task is set.
-        Start the timer when you begin, or mark done when finished.
-        """
+
+        let startPatterns = ["start timer", "start now", "start it", "go ahead", "begin", "let's start", "start work"]
+        if startPatterns.contains(where: lower.contains) {
+            return IntentParser.Command(
+                intent: .start_timer,
+                confidence: 0.85,
+                taskText: "",
+                question: "",
+                reason: "Direct start request"
+            )
+        }
+
+        let stopPatterns = ["stop timer", "pause timer", "pause", "stop it", "halt"]
+        if stopPatterns.contains(where: lower.contains) {
+            return IntentParser.Command(
+                intent: .stop_timer,
+                confidence: 0.8,
+                taskText: "",
+                question: "",
+                reason: "Requested timer stop"
+            )
+        }
+
+        if lower.contains("reset") {
+            return IntentParser.Command(
+                intent: .reset_timer,
+                confidence: 0.75,
+                taskText: "",
+                question: "",
+                reason: "Asked to reset timer"
+            )
+        }
+
+        let donePatterns = ["mark done", "i'm done", "i am done", "done for today", "finished"]
+        if donePatterns.contains(where: lower.contains) {
+            return IntentParser.Command(
+                intent: .mark_done,
+                confidence: 0.78,
+                taskText: "",
+                question: "",
+                reason: "User wants to finish task"
+            )
+        }
+
+        if lower.contains("undo") {
+            return IntentParser.Command(
+                intent: .undo_done,
+                confidence: 0.7,
+                taskText: "",
+                question: "",
+                reason: "Undo request detected"
+            )
+        }
+
+        if lower.contains("history") {
+            return IntentParser.Command(
+                intent: .show_history,
+                confidence: 0.72,
+                taskText: "",
+                question: "",
+                reason: "Asked for history"
+            )
+        }
+
+        if lower.contains("setting") || lower.contains("pref") {
+            return IntentParser.Command(
+                intent: .open_settings,
+                confidence: 0.7,
+                taskText: "",
+                question: "",
+                reason: "Settings request detected"
+            )
+        }
+
+        if lower.contains("help") || lower.contains("how do") || lower.contains("how does") {
+            return IntentParser.Command(
+                intent: .help,
+                confidence: 0.68,
+                taskText: "",
+                question: "",
+                reason: "Help requested"
+            )
+        }
+
+        if lower.contains("change it to") || lower.contains("edit task") {
+            if let taskText = normalizedTaskText(from: userText) {
+                return IntentParser.Command(
+                    intent: .edit_task,
+                    confidence: 0.7,
+                    taskText: taskText,
+                    question: "",
+                    reason: "User asked to update task"
+                )
+            }
+        }
+
+        let hintsForSetTask = ["my one thing is", "one thing is", "today:", "task is", "my task"]
+        if hintsForSetTask.contains(where: lower.contains) {
+            if let taskText = normalizedTaskText(from: userText) {
+                return IntentParser.Command(
+                    intent: .set_task,
+                    confidence: 0.7,
+                    taskText: taskText,
+                    question: "",
+                    reason: "Outlined a new task"
+                )
+            }
+        }
+
+        if context.hasTask == false, let taskText = normalizedTaskText(from: userText) {
+            return IntentParser.Command(
+                intent: .set_task,
+                confidence: 0.65,
+                taskText: taskText,
+                question: "",
+                reason: "Assumed new task"
+            )
+        }
+
+        if trimmed.isEmpty {
+            return IntentParser.Command(
+                intent: .clarify,
+                confidence: 0.5,
+                taskText: "",
+                question: "What action should I take?",
+                reason: "Empty input"
+            )
+        }
+
+        return IntentParser.Command(
+            intent: .clarify,
+            confidence: 0.55,
+            taskText: "",
+            question: "Do you want to start the timer or mark done?",
+            reason: "Need clarification"
+        )
     }
 
     func showRunningStatus(context: AssistantContext?) {
@@ -406,9 +596,102 @@ final class OneThingAssistantManager: ObservableObject {
         """
     }
 
-    private func encodeContext(_ context: AssistantContext) -> String? {
-        let encoder = JSONEncoder()
-        encoder.outputFormatting = [.sortedKeys]
-        return try? String(data: encoder.encode(context), encoding: .utf8)
+    private struct IntentParser {
+        struct Context: Codable {
+            let hasTask: Bool
+            let isRunning: Bool
+            let isCompleted: Bool
+            let pendingAction: PendingAction
+
+            enum CodingKeys: String, CodingKey {
+                case hasTask = "has_task"
+                case isRunning = "is_running"
+                case isCompleted = "is_completed"
+                case pendingAction = "pending_action"
+            }
+
+            enum PendingAction: String, Codable {
+                case startTimer = "start_timer"
+                case resetTimer = "reset_timer"
+                case markDone = "mark_done"
+                case none = ""
+            }
+        }
+
+        struct Command: Codable {
+            let intent: Intent
+            let confidence: Double
+            let taskText: String
+            let question: String
+            let reason: String
+
+            enum Intent: String, Codable {
+                case start_timer
+                case stop_timer
+                case reset_timer
+                case mark_done
+                case undo_done
+                case set_task
+                case edit_task
+                case show_history
+                case open_settings
+                case help
+                case clarify
+                case noop
+            }
+
+            enum CodingKeys: String, CodingKey {
+                case intent
+                case confidence
+                case taskText = "task_text"
+                case question
+                case reason
+            }
+        }
+
+        static let instructions: String = """
+        You are an intent parser for the OneThing app.
+        Your only job is to turn the user’s message into a single JSON command that the app can execute.
+        Output must be valid JSON without surrounding markdown or extra text.
+        Choose exactly one intent from: start_timer, stop_timer, reset_timer, mark_done, undo_done, set_task, edit_task, show_history, open_settings, help, clarify, noop.
+        Provide confidence between 0.0 and 1.0, include only one task_text string, include question only when intent is clarify, and write a short reason (max 12 words).
+        Use only the provided context object (has_task, is_running, is_completed, pending_action) to decide how to interpret agreement keywords.
+        pending_action can be start_timer, reset_timer, mark_done, or an empty string when no confirmation is pending.
+        If the intent is ambiguous, set intent to clarify and ask one short question.
+        Do not invent features outside the allowed intents.
+        """
+
+        static func prompt(context: Context, userText: String) -> String {
+            let contextJSON = self.contextJSON(context)
+            return """
+            Context:
+            \(contextJSON)
+
+            User message:
+            \(userText)
+            """
+        }
+
+        static func contextJSON(_ context: Context) -> String {
+            let encoder = JSONEncoder()
+            encoder.outputFormatting = [.sortedKeys]
+            guard let data = try? encoder.encode(context), let json = String(data: data, encoding: .utf8) else {
+                return "{}"
+            }
+            return json
+        }
+
+        static func decodeResponse(_ raw: String) -> Command? {
+            let trimmed = raw.trimmingCharacters(in: .whitespacesAndNewlines)
+            let candidate: String
+            if let start = trimmed.firstIndex(of: "{"), let end = trimmed.lastIndex(of: "}") {
+                candidate = String(trimmed[start ... end])
+            } else {
+                candidate = trimmed
+            }
+            guard let data = candidate.data(using: .utf8) else { return nil }
+            return try? JSONDecoder().decode(Command.self, from: data)
+        }
     }
+
 }

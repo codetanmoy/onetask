@@ -2,29 +2,40 @@ import SwiftUI
 import SwiftData
 
 struct RootView: View {
+    @AppStorage(UserPreferences.onboardingCompleteKey) private var onboardingComplete: Bool = false
+
     var body: some View {
-        TabView {
-            NavigationStack {
-                HomeView()
-            }
-            .tabItem {
-                Label("Home", systemImage: "house")
-            }
+        ZStack {
+            TabView {
+                NavigationStack {
+                    HomeView()
+                }
+                .tabItem {
+                    Label("Home", systemImage: "house")
+                }
 
-            NavigationStack {
-                HistoryView()
-            }
-            .tabItem {
-                Label("History", systemImage: "clock")
-            }
+                NavigationStack {
+                    HistoryView()
+                }
+                .tabItem {
+                    Label("History", systemImage: "clock")
+                }
 
-            NavigationStack {
-                SettingsView()
+                NavigationStack {
+                    SettingsView()
+                }
+                .tabItem {
+                    Label("Settings", systemImage: "gearshape")
+                }
             }
-            .tabItem {
-                Label("Settings", systemImage: "gearshape")
+            .navigationTitle("One Task")
+
+            if !onboardingComplete {
+                OnboardingView(isComplete: $onboardingComplete)
+                    .transition(.opacity)
+                    .zIndex(1)
             }
-        }.navigationTitle("One Task")
+        }
     }
 }
 

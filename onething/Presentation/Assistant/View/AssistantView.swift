@@ -16,6 +16,7 @@ struct AssistantView: View {
 
     var body: some View {
         ScrollViewReader { proxy in
+            let bottomPadding: CGFloat = isAwaitingStartTimerConfirmation ? 220 : 148
             ZStack(alignment: .topTrailing) {
                 VStack(spacing: 0) {
                     ScrollView {
@@ -33,7 +34,7 @@ struct AssistantView: View {
                         }
                         .padding(.horizontal, 20)
                         .padding(.top, 12)
-                        .padding(.bottom, 148)
+                        .padding(.bottom, bottomPadding)
                     }
                     .frame(maxWidth: .infinity)
                     .layoutPriority(1)
@@ -149,18 +150,84 @@ struct AssistantView: View {
                         assistant.showMenuIfNeeded()
                         scrollToBottom(proxy)
                     }
-                default:
-                    Text(message.text)
-                        .font(.body)
-                        .foregroundStyle(isUser ? .white : .primary)
-                        .padding(.horizontal, 12)
-                        .padding(.vertical, 10)
-                        .background(isUser ? Color.accentColor : Color(.secondarySystemGroupedBackground))
-                        .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+                case .text:
+                    textMessageBubble(message, proxy: proxy)
                 }
             }
             .frame(alignment: isUser ? .trailing : .leading)
             if !isUser { Spacer(minLength: 0) }
+        }
+    }
+
+    @ViewBuilder
+    private func textMessageBubble(_ message: OneThingAssistantManager.Message, proxy: ScrollViewProxy) -> some View {
+        let isUser = message.role == .user
+        let showConfirmation = shouldShowStartTimerButtons(for: message)
+
+        VStack(alignment: .leading, spacing: showConfirmation ? 10 : 0) {
+            Text(message.text)
+                .font(.body)
+                .foregroundStyle(isUser ? .white : .primary)
+                .padding(.horizontal, 12)
+                .padding(.vertical, 10)
+                .background(isUser ? Color.accentColor : Color(.secondarySystemGroupedBackground))
+                .clipShape(RoundedRectangle(cornerRadius: 14, style: .continuous))
+
+            if showConfirmation {
+                confirmationButtons(for: message, proxy: proxy)
+                    .padding(.top, 4)
+            }
+        }
+    }
+
+    private func shouldShowStartTimerButtons(for message: OneThingAssistantManager.Message) -> Bool {
+        guard message.role == .assistant else { return false }
+        guard assistant.messages.last?.id == message.id else { return false }
+        guard case .createTaskAwaitStartTimer = assistant.flow else { return false }
+        return message.text.contains("Start the timer now?")
+    }
+
+    @ViewBuilder
+    private func confirmationButtons(for message: OneThingAssistantManager.Message, proxy: ScrollViewProxy) -> some View {
+        HStack(spacing: 10) {
+            confirmationButton(title: "Yes", filled: true) {
+                sendConfirmationResponse("Yes", proxy: proxy)
+            }
+            confirmationButton(title: "No", filled: false) {
+                sendConfirmationResponse("No", proxy: proxy)
+            }
+        }
+        .frame(maxWidth: .infinity)
+        .transition(.opacity)
+        .onAppear {
+            withAnimation(.easeInOut(duration: 0.22)) {
+                proxy.scrollTo(message.id, anchor: .bottom)
+            }
+        }
+    }
+
+    private func confirmationButton(title: String, filled: Bool, action: @escaping () -> Void) -> some View {
+        Button {
+            action()
+        } label: {
+            Text(title)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 10)
+                .background(filled ? Color.accentColor : Color(.secondarySystemFill))
+                .foregroundStyle(filled ? .white : .primary)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+        }
+        .disabled(assistant.isGenerating)
+        .opacity(assistant.isGenerating ? 0.6 : 1)
+    }
+
+    private func sendConfirmationResponse(_ text: String, proxy: ScrollViewProxy) {
+        Task {
+            let ctx = makeContext()
+            await assistant.send(userText: text, context: ctx, actions: actions)
+            assistant.showRunningStatus(context: makeContext())
+            scrollToBottom(proxy)
         }
     }
 
@@ -348,6 +415,13 @@ struct AssistantView: View {
             retentionDays: retentionDays,
             hapticsEnabled: hapticsEnabled
         )
+    }
+
+    private var isAwaitingStartTimerConfirmation: Bool {
+        if case .createTaskAwaitStartTimer = assistant.flow {
+            return true
+        }
+        return false
     }
 }
 

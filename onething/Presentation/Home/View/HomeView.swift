@@ -53,6 +53,10 @@ struct HomeView: View {
             guard newPhase == .active else { return }
             viewModel.handle(.onAppear, context: modelContext, options: options)
         }
+        .onChange(of: isAssistantPresented) { presented in
+            guard presented == false else { return }
+            viewModel.handle(.onAppear, context: modelContext, options: options)
+        }
         .alert("Reset timer?", isPresented: resetBinding) {
             Button("Reset", role: .destructive) {
                 animateIfAllowed {

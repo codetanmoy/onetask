@@ -35,9 +35,9 @@ final class HomeViewModel: ObservableObject {
         case let .setTask(text):
             guard let entry else { return }
             guard entry.isCompleted == false else { return }
-            let trimmed = text.trimmingCharacters(in: .whitespacesAndNewlines)
-            let capped = String(trimmed.prefix(Constants.maxTaskLength))
-            entry.taskText = capped
+            let capped = String(text.prefix(Constants.maxTaskLength))
+            let trimmed = capped.trimmingCharacters(in: .whitespacesAndNewlines)
+            entry.taskText = trimmed
             entry.updatedAt = .now
             state.taskDraft = capped
             try? context.save()
