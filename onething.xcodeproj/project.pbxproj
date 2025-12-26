@@ -10,6 +10,9 @@
 		AEACD9FF2EFECB6500AFE240 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AEACD9FE2EFECB6500AFE240 /* WidgetKit.framework */; };
 		AEACDA012EFECB6500AFE240 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AEACDA002EFECB6500AFE240 /* SwiftUI.framework */; };
 		AEACDA122EFECB6600AFE240 /* widgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AEACD9FC2EFECB6500AFE240 /* widgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
+		B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */; };
+		B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */; };
+		B2E7B6D51F4B4AE880BE1A92 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -42,6 +45,9 @@
 		AEACDA002EFECB6500AFE240 /* SwiftUI.framework */ = {isa = PBXFileReference; lastKnownFileType = wrapper.framework; name = SwiftUI.framework; path = System/Library/Frameworks/SwiftUI.framework; sourceTree = SDKROOT; };
 		AEACDA182EFECBE600AFE240 /* widgetExtension.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = widgetExtension.entitlements; sourceTree = "<group>"; };
 		AEE1B8162EFD99B80072080F /* onething.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = onething.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = widget/OneThingWidget.swift; sourceTree = "<group>"; };
+		B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = widget/widgetBundle.swift; sourceTree = "<group>"; };
+		B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = widget/Assets.xcassets; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -118,6 +124,16 @@
 			name = Frameworks;
 			sourceTree = "<group>";
 		};
+		AEACDBF32EFED20A00AFE240 /* Recovered References */ = {
+			isa = PBXGroup;
+			children = (
+				B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */,
+				B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */,
+				B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */,
+			);
+			name = "Recovered References";
+			sourceTree = "<group>";
+		};
 		AEE1B80D2EFD99B80072080F = {
 			isa = PBXGroup;
 			children = (
@@ -126,6 +142,7 @@
 				AEACDA022EFECB6500AFE240 /* widget */,
 				AEACD9FD2EFECB6500AFE240 /* Frameworks */,
 				AEE1B8172EFD99B80072080F /* Products */,
+				AEACDBF32EFED20A00AFE240 /* Recovered References */,
 			);
 			sourceTree = "<group>";
 		};
@@ -230,6 +247,7 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2E7B6D51F4B4AE880BE1A92 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -247,6 +265,8 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */,
+				B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -274,6 +294,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = widgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7566CL44A4;
@@ -289,6 +310,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qps.onething.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;
@@ -305,6 +327,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				ASSETCATALOG_COMPILER_WIDGET_BACKGROUND_COLOR_NAME = WidgetBackground;
 				CODE_SIGN_ENTITLEMENTS = widgetExtension.entitlements;
+				CODE_SIGN_IDENTITY = "Apple Development";
 				CODE_SIGN_STYLE = Automatic;
 				CURRENT_PROJECT_VERSION = 1;
 				DEVELOPMENT_TEAM = 7566CL44A4;
@@ -320,6 +343,7 @@
 				MARKETING_VERSION = 1.0;
 				PRODUCT_BUNDLE_IDENTIFIER = com.qps.onething.widget;
 				PRODUCT_NAME = "$(TARGET_NAME)";
+				PROVISIONING_PROFILE_SPECIFIER = "";
 				SKIP_INSTALL = YES;
 				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_APPROACHABLE_CONCURRENCY = YES;

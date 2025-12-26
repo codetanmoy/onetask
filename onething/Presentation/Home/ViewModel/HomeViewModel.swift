@@ -28,6 +28,7 @@ final class HomeViewModel: ObservableObject {
                 )
                 state.taskDraft = entry?.taskText ?? ""
                 recentEntries = try DayEntryRepository.fetchRecentEntries(context: context, limit: 5)
+                try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             } catch {
                 LoggingService.log("Failed to load today entry: \(error)")
             }
@@ -41,6 +42,7 @@ final class HomeViewModel: ObservableObject {
             entry.updatedAt = .now
             state.taskDraft = capped
             try? context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
 
         case .startStopTapped:
             guard let entry, entry.isCompleted == false else { return }
@@ -52,6 +54,7 @@ final class HomeViewModel: ObservableObject {
             }
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             objectWillChange.send()
 
         case .resetConfirmed:
@@ -59,6 +62,7 @@ final class HomeViewModel: ObservableObject {
             TimerService.reset(entry: entry)
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             objectWillChange.send()
 
         case .markDoneTapped:
@@ -70,6 +74,7 @@ final class HomeViewModel: ObservableObject {
             entry.updatedAt = .now
             HapticsService.success(enabled: options.hapticsEnabled)
             try? context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             showUndoWindow(for: entry)
             objectWillChange.send()
 
@@ -80,6 +85,7 @@ final class HomeViewModel: ObservableObject {
             entry.updatedAt = .now
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             state.showUndoToast = false
             state.lastCompletedAt = nil
             objectWillChange.send()
@@ -97,6 +103,7 @@ final class HomeViewModel: ObservableObject {
             entry = newEntry
             state.taskDraft = ""
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             objectWillChange.send()
         }
     }

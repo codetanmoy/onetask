@@ -1,5 +1,6 @@
 import Foundation
 import SwiftData
+import WidgetKit
 
 enum AssistantActionService {
     @MainActor
@@ -22,12 +23,14 @@ enum AssistantActionService {
             let newEntry = DayEntry(day: today, taskText: task)
             context.insert(newEntry)
             try context.save()
+            try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
             return newEntry
         }
 
         entry.taskText = task
         entry.updatedAt = now
         try context.save()
+        try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
         return entry
     }
 
@@ -42,6 +45,7 @@ enum AssistantActionService {
         guard hasTask, entry.isCompleted == false, entry.isRunning == false else { return }
         TimerService.start(entry: entry, now: now)
         try context.save()
+        try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
     }
 
     @MainActor
@@ -54,6 +58,7 @@ enum AssistantActionService {
         guard entry.isRunning else { return }
         TimerService.stop(entry: entry, now: now)
         try context.save()
+        try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
     }
 
     @MainActor
@@ -75,5 +80,6 @@ enum AssistantActionService {
         entry.completedAt = now
         entry.updatedAt = now
         try context.save()
+        try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
     }
 }
