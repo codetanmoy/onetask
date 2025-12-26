@@ -22,8 +22,12 @@ final class OneThingAssistantManager: ObservableObject {
     Do not store or recall personal chat content.
     """
 
-    struct Message: Identifiable, Equatable {
-        enum Kind: Equatable { case text, menu }
+        struct Message: Identifiable, Equatable {
+        enum Kind: Equatable {
+            case text
+            case menu
+            case running(taskText: String, previousElapsedSeconds: Int, startedAt: Date?)
+        }
         enum Role { case user, assistant }
         let id = UUID()
         let role: Role
@@ -43,7 +47,8 @@ final class OneThingAssistantManager: ObservableObject {
     struct Actions {
         var setTaskText: (_ text: String) async throws -> Void
         var startTimer: () async throws -> Void
-        var stopTimer: () async throws -> Void
+        var pauseTimer: () async throws -> Void
+        var completeTask: () async throws -> Void
         var daySummary: (_ day: Date) async throws -> String
     }
 
@@ -59,8 +64,12 @@ final class OneThingAssistantManager: ObservableObject {
         flow = .menu
     }
 
-    func seedIfNeeded() {
+    func seedIfNeeded(context: AssistantContext? = nil) {
         guard messages.isEmpty else { return }
+        if let context, context.today.isRunning {
+            showRunningStatus(context: context)
+            return
+        }
         withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
             messages.append(.init(role: .assistant, kind: .menu, text: ""))
         }
@@ -164,6 +173,18 @@ final class OneThingAssistantManager: ObservableObject {
                 Send “today” or YYYY-MM-DD.
                 """)
             }
+            if lower == "today" {
+                let today = Calendar.current.startOfDay(for: .now)
+                do {
+                    let summary = try await actions.daySummary(today)
+                    return Reply(kind: .text, text: summary)
+                } catch {
+                    return Reply(kind: .text, text: """
+                    I couldn’t load today’s summary right now.
+                    Try again in a moment or pick another date.
+                    """)
+                }
+            }
             return Reply(kind: .menu, text: "")
 
         case .createTaskAwaitName:
@@ -190,7 +211,8 @@ final class OneThingAssistantManager: ObservableObject {
                     flow = .menu
                     return Reply(kind: .text, text: """
                     Timer started.
-                    Next: focus until you stop it, then mark done in Home.
+                    Task set: \(taskText)
+                    Timer is running now. Would you like to stop it?
                     """)
                 } catch {
                     flow = .menu
@@ -337,6 +359,50 @@ final class OneThingAssistantManager: ObservableObject {
         return """
         Your task is set.
         Start the timer when you begin, or mark done when finished.
+        """
+    }
+
+    func showRunningStatus(context: AssistantContext?) {
+        guard let context, context.today.isRunning else { return }
+        if case .running = messages.last?.kind { return }
+        let task = context.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let messageText = runningStatusText(context: context)
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
+            messages.append(.init(
+                role: .assistant,
+                kind: .running(
+                    taskText: task,
+                    previousElapsedSeconds: context.today.previousElapsedSeconds,
+                    startedAt: context.today.startedAt
+                ),
+                text: messageText
+            ))
+        }
+    }
+
+    func clearRunningStatus() {
+        if case .running = messages.last?.kind {
+            withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
+                messages.removeLast()
+            }
+        }
+    }
+
+    func showMenuIfNeeded() {
+        if case .menu = messages.last?.kind { return }
+        withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
+            messages.append(.init(role: .assistant, kind: .menu, text: ""))
+        }
+    }
+
+    private func runningStatusText(context: AssistantContext) -> String {
+        let task = context.today.taskText.trimmingCharacters(in: .whitespacesAndNewlines)
+        let taskLine = task.isEmpty ? "Your task is running." : "Task \"\(task)\" is running."
+        let timerLine = "Timer: \(DurationFormatter.timer(context.today.elapsedSeconds))"
+        return """
+        \(taskLine)
+        \(timerLine)
+        Would you like to stop it?
         """
     }
 

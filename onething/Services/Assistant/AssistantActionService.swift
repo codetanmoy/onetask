@@ -55,4 +55,25 @@ enum AssistantActionService {
         TimerService.stop(entry: entry, now: now)
         try context.save()
     }
+
+    @MainActor
+    static func pauseTimer(context: ModelContext, dailyResetEnabled: Bool, now: Date = .now) throws {
+        try stopTimerIfRunning(context: context, dailyResetEnabled: dailyResetEnabled, now: now)
+    }
+
+    @MainActor
+    static func completeTask(context: ModelContext, dailyResetEnabled: Bool, now: Date = .now) throws {
+        let entry = try DayEntryRepository.fetchOrCreateToday(
+            context: context,
+            dailyResetEnabled: dailyResetEnabled,
+            now: now
+        )
+        guard entry.isCompleted == false else { return }
+        if entry.isRunning {
+            TimerService.stop(entry: entry, now: now)
+        }
+        entry.completedAt = now
+        entry.updatedAt = now
+        try context.save()
+    }
 }

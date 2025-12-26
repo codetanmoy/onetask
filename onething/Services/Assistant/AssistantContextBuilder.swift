@@ -26,6 +26,8 @@ enum AssistantContextBuilder {
                 taskText: representative?.taskText ?? "",
                 isRunning: representative?.isRunning ?? false,
                 elapsedSeconds: representative?.totalElapsedSeconds(now: now) ?? 0,
+                previousElapsedSeconds: representative?.elapsedSeconds ?? 0,
+                startedAt: representative?.startedAt,
                 completed: representative?.isCompleted ?? false
             )
 

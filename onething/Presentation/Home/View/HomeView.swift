@@ -28,13 +28,11 @@ struct HomeView: View {
                 .padding(.trailing, 18)
                 .padding(.bottom, 18)
             }
-            .sheet(isPresented: $isAssistantPresented) {
-                NavigationStack {
-                    AssistantView()
-                }
-                .presentationDetents([.fraction(0.60), .large])
-                .presentationDragIndicator(.visible)
-            }
+        .fullScreenCover(isPresented: $isAssistantPresented) {
+            //NavigationStack {
+                AssistantView()
+            //}
+        }
     }
 
     private var homeScaffold: some View {

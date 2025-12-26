@@ -5,12 +5,14 @@ struct AssistantContext: Codable, Equatable {
     var recent: [RecentSummary]
     var settings: SettingsSummary
 
-    struct TodaySummary: Codable, Equatable {
-        var taskText: String
-        var isRunning: Bool
-        var elapsedSeconds: Int
-        var completed: Bool
-    }
+        struct TodaySummary: Codable, Equatable {
+            var taskText: String
+            var isRunning: Bool
+            var elapsedSeconds: Int
+            var previousElapsedSeconds: Int
+            var startedAt: Date?
+            var completed: Bool
+        }
 
     struct RecentSummary: Codable, Equatable {
         var date: String
@@ -25,4 +27,3 @@ struct AssistantContext: Codable, Equatable {
         var hapticsEnabled: Bool
     }
 }
-

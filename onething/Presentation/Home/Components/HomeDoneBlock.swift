@@ -53,26 +53,42 @@ struct HomeDoneBlock: View {
                     .foregroundStyle(.secondary)
             } else if isRunning {
                 OneThingSectionHeader(title: "Next")
-                Text("Stop the timer when you’re done working.")
+                Text("Pause when you need a break, or complete when the work is done.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
 
-                Button {
-                    runAnimated {
-                        viewModel.handle(.startStopTapped, context: modelContext, options: options)
+                HStack(spacing: 12) {
+                    Button {
+                        runAnimated {
+                            viewModel.handle(.startStopTapped, context: modelContext, options: options)
+                        }
+                    } label: {
+                        Label("Pause", systemImage: "pause.fill")
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                } label: {
-                    Label("Stop Timer", systemImage: "pause.fill")
-                        .frame(maxWidth: .infinity, minHeight: 44)
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .tint(.accentColor)
+
+                    Button {
+                        runAnimated {
+                            viewModel.handle(.markDoneTapped, context: modelContext, options: options)
+                        }
+                    } label: {
+                        Label("Complete", systemImage: "checkmark.circle.fill")
+                            .frame(maxWidth: .infinity, minHeight: 44)
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .buttonBorderShape(.capsule)
+                    .controlSize(.large)
+                    .tint(.accentColor)
                 }
-                .buttonStyle(.borderedProminent)
-                .buttonBorderShape(.capsule)
-                .controlSize(.large)
             } else {
                 OneThingSectionHeader(title: "Next")
 
                 if elapsedSeconds == 0 {
-                    Text("Start the timer or mark done if you finished without timing.")
+                    Text("Start the timer whenever you’re ready, it will keep counting.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
 
@@ -89,44 +105,21 @@ struct HomeDoneBlock: View {
                         .buttonBorderShape(.capsule)
                         .controlSize(.large)
 
-                        Button {
-                            runAnimated {
-                                viewModel.handle(.markDoneTapped, context: modelContext, options: options)
-                            }
-                        } label: {
-                            Text("Mark Done")
-                                .frame(minHeight: 44)
-                        }
-                        .buttonStyle(.bordered)
-                        .buttonBorderShape(.capsule)
-                        .controlSize(.large)
                     }
                 } else {
-                    Text("Mark done when you’re finished.")
+                    Text("Start the timer when you’re ready.")
                         .font(.footnote)
                         .foregroundStyle(.secondary)
-
-                    Button {
-                        runAnimated {
-                            viewModel.handle(.markDoneTapped, context: modelContext, options: options)
-                        }
-                    } label: {
-                        Label("Mark Done", systemImage: "checkmark")
-                            .frame(maxWidth: .infinity, minHeight: 44)
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .buttonBorderShape(.capsule)
-                    .controlSize(.large)
 
                     Button {
                         runAnimated {
                             viewModel.handle(.startStopTapped, context: modelContext, options: options)
                         }
                     } label: {
-                        Text("Start Again")
+                        Label("Start Timer", systemImage: "play.fill")
                             .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                     .buttonBorderShape(.capsule)
                     .controlSize(.large)
                 }
