@@ -7,6 +7,22 @@ enum DayEntryRepository {
     }
 
     @MainActor
+    static func fetchEntries(forDay day: Date, context: ModelContext) throws -> [DayEntry] {
+        let descriptor = FetchDescriptor<DayEntry>(
+            predicate: #Predicate { $0.day == day },
+            sortBy: [SortDescriptor(\.createdAt, order: .reverse)]
+        )
+        return try context.fetch(descriptor)
+    }
+
+    @MainActor
+    static func fetchActiveToday(context: ModelContext, now: Date = .now) throws -> DayEntry? {
+        let today = Calendar.current.startOfDay(for: now)
+        let entries = try fetchEntries(forDay: today, context: context)
+        return entries.first(where: { $0.completedAt == nil })
+    }
+
+    @MainActor
     static func fetchOrCreateToday(
         context: ModelContext,
         dailyResetEnabled: Bool,

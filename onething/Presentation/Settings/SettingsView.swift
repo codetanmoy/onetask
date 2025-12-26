@@ -20,6 +20,12 @@ struct SettingsView: View {
                 }
             }
 
+            Section("Assistant") {
+                NavigationLink("OneThing Assistant") {
+                    AssistantView()
+                }
+            }
+
             Section("About") {
                 Text("Pick one thing. Do it. Done.")
                 Text("Local-first. No shame.")

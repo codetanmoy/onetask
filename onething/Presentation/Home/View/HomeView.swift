@@ -6,6 +6,7 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.scenePhase) private var scenePhase
     @StateObject private var viewModel = HomeViewModel()
+    @State private var isAssistantPresented: Bool = false
 
     @AppStorage(UserPreferences.retentionDaysKey) private var retentionDays: Int = Constants.defaultRetentionDays
     @AppStorage(UserPreferences.dailyResetEnabledKey) private var dailyResetEnabled: Bool = true
@@ -13,6 +14,27 @@ struct HomeView: View {
 
     var body: some View {
         homeScaffold
+            .overlay(alignment: .bottomTrailing) {
+                FloatingAssistantButton {
+                    if reduceMotion {
+                        isAssistantPresented = true
+                    } else {
+                        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                            isAssistantPresented = true
+                        }
+                    }
+                    HapticsService.lightImpact(enabled: hapticsEnabled)
+                }
+                .padding(.trailing, 18)
+                .padding(.bottom, 18)
+            }
+            .sheet(isPresented: $isAssistantPresented) {
+                NavigationStack {
+                    AssistantView()
+                }
+                .presentationDetents([.fraction(0.60), .large])
+                .presentationDragIndicator(.visible)
+            }
     }
 
     private var homeScaffold: some View {

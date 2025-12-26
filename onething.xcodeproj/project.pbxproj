@@ -23,6 +23,7 @@
 				Info.plist,
 				Media/.gitkeep,
 				Presentation/OnBoarding/.gitkeep,
+				widget.md,
 			);
 			target = AEE1B8152EFD99B80072080F /* onething */;
 		};

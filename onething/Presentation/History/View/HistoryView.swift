@@ -6,33 +6,70 @@ struct HistoryView: View {
     @AppStorage(UserPreferences.retentionDaysKey) private var retentionDays: Int = Constants.defaultRetentionDays
     @AppStorage(UserPreferences.dailyResetEnabledKey) private var dailyResetEnabled: Bool = true
     @State private var refreshToken: UUID = UUID()
+    @State private var selectedDate: Date = .now
 
-    @Query(sort: [SortDescriptor(\DayEntry.day, order: .forward), SortDescriptor(\DayEntry.createdAt, order: .reverse)]) private var allEntries: [DayEntry]
+    @Query(sort: [SortDescriptor(\DayEntry.day, order: .forward), SortDescriptor(\DayEntry.createdAt, order: .forward)]) private var allEntries: [DayEntry]
 
     var body: some View {
         List {
-            ForEach(filteredEntries) { entry in
-                NavigationLink {
-                    DayDetailView(entry: entry)
-                } label: {
-                    HistoryRow(entry: entry)
-                }
-                .contextMenu {
-                    Button("Copy to Today") {
-                        copyToToday(entry)
-                    }
-                    Button("Delete", role: .destructive) {
-                        delete(entry)
-                    }
-                }
+            Section {
+                DatePicker(
+                    "Select a day",
+                    selection: $selectedDate,
+                    displayedComponents: [.date]
+                )
+                .datePickerStyle(.graphical)
             }
-            .onDelete(perform: deleteOffsets)
+
+            Section {
+                if selectedDayEntries.isEmpty {
+                    VStack(spacing: 10) {
+                        Image(systemName: "calendar")
+                            .font(.title2)
+                            .foregroundStyle(.secondary)
+                        Text("No entries")
+                            .font(.headline)
+                        Text("Pick another date.")
+                            .font(.footnote)
+                            .foregroundStyle(.secondary)
+                    }
+                    .frame(maxWidth: .infinity, alignment: .center)
+                    .padding(.vertical, 24)
+                } else {
+                    ForEach(selectedDayEntries) { entry in
+                        NavigationLink {
+                            DayDetailView(entry: entry)
+                        } label: {
+                            HistoryTimelineRow(entry: entry)
+                        }
+                        .contextMenu {
+                            Button("Copy to Today") {
+                                copyToToday(entry)
+                            }
+                            Button("Delete", role: .destructive) {
+                                delete(entry)
+                            }
+                        }
+                    }
+                    .onDelete(perform: deleteOffsetsForSelectedDay)
+                }
+            } header: {
+                Text(selectedDayTitle)
+            }
         }
         .id(refreshToken)
         .navigationTitle("History")
         .refreshable {
             // SwiftData/@Query usually updates automatically; this forces a re-evaluation and is a good UX affordance.
             refreshToken = UUID()
+        }
+        .onAppear {
+            // Default to the most recent day that has entries (within retention), otherwise today.
+            if let newestDay = filteredEntries.last?.day {
+                selectedDate = newestDay
+            } else {
+                selectedDate = .now
+            }
         }
     }
 
@@ -41,6 +78,18 @@ struct HistoryView: View {
         let calendar = Calendar.current
         let cutoff = calendar.date(byAdding: .day, value: -retentionDays, to: calendar.startOfDay(for: .now)) ?? .distantPast
         return allEntries.filter { $0.day >= cutoff }
+    }
+
+    private var selectedDay: Date {
+        Calendar.current.startOfDay(for: selectedDate)
+    }
+
+    private var selectedDayEntries: [DayEntry] {
+        filteredEntries.filter { $0.day == selectedDay }
+    }
+
+    private var selectedDayTitle: String {
+        selectedDay.formatted(date: .complete, time: .omitted)
     }
 
     @MainActor
@@ -58,9 +107,9 @@ struct HistoryView: View {
         }
     }
 
-    private func deleteOffsets(_ offsets: IndexSet) {
+    private func deleteOffsetsForSelectedDay(_ offsets: IndexSet) {
         for index in offsets {
-            delete(filteredEntries[index])
+            delete(selectedDayEntries[index])
         }
     }
 
