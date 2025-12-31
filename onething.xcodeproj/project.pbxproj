@@ -13,6 +13,7 @@
 		B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */; };
 		B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */; };
 		B2E7B6D51F4B4AE880BE1A92 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */; };
+		B2E7B6D51F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -48,6 +49,7 @@
 		B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = widget/OneThingWidget.swift; sourceTree = "<group>"; };
 		B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = widget/widgetBundle.swift; sourceTree = "<group>"; };
 		B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Assets.xcassets; path = widget/Assets.xcassets; sourceTree = "<group>"; };
+		B2E7B6D11F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = widget/OneThingLiveActivity.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXFileSystemSynchronizedBuildFileExceptionSet section */
@@ -61,16 +63,8 @@
 		AEE1B8232EFD99B90072080F /* Exceptions for "onething" folder in "onething" target */ = {
 			isa = PBXFileSystemSynchronizedBuildFileExceptionSet;
 			membershipExceptions = (
-				01_app_ideology.md,
-				02_theme_uiux.md,
-				03_data_models_cloud_sync.md,
-				04_screens.md,
-				05_product_logic.md,
-				06_folder_structure_review.md,
 				Info.plist,
 				Media/.gitkeep,
-				onboarding.md,
-				widget.md,
 			);
 			target = AEE1B8152EFD99B80072080F /* onething */;
 		};
@@ -130,6 +124,7 @@
 				B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */,
 				B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */,
 				B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */,
+				B2E7B6D11F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift */,
 			);
 			name = "Recovered References";
 			sourceTree = "<group>";
@@ -267,6 +262,7 @@
 			files = (
 				B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */,
 				B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */,
+				B2E7B6D51F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -300,8 +296,10 @@
 				DEVELOPMENT_TEAM = 7566CL44A4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = widget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = widget;
+				INFOPLIST_KEY_CFBundleDisplayName = "OneThing Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -333,8 +331,10 @@
 				DEVELOPMENT_TEAM = 7566CL44A4;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = widget/Info.plist;
-				INFOPLIST_KEY_CFBundleDisplayName = widget;
+				INFOPLIST_KEY_CFBundleDisplayName = "OneThing Widget";
 				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -367,12 +367,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = onething/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OneThing;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -407,12 +408,13 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = onething/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OneThing;
+				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPad = "UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
 				INFOPLIST_KEY_UISupportedInterfaceOrientations_iPhone = "UIInterfaceOrientationPortrait UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight";
-				IPHONEOS_DEPLOYMENT_TARGET = 26.0;
+				IPHONEOS_DEPLOYMENT_TARGET = 18.6;
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",

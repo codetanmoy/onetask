@@ -34,9 +34,7 @@ enum WidgetSnapshotService {
     }
 
     private static let appGroupIdentifiers: [String] = [
-        "group.com.qps.onething.widget",
-        "group.com.qps.onething",
-        "group.com.qps.com-shipapps-onething"
+        "group.com.qps.onething"
     ]
 }
 

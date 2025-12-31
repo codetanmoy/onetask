@@ -1,3 +1,4 @@
+import ActivityKit
 import Foundation
 import SwiftData
 import Combine
@@ -29,6 +30,11 @@ final class HomeViewModel: ObservableObject {
                 state.taskDraft = entry?.taskText ?? ""
                 recentEntries = try DayEntryRepository.fetchRecentEntries(context: context, limit: 5)
                 try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+                Task {
+                    if let entry = entry {
+                        await LiveActivityService.sync(entry: entry)
+                    }
+                }
             } catch {
                 LoggingService.log("Failed to load today entry: \(error)")
             }
@@ -43,6 +49,9 @@ final class HomeViewModel: ObservableObject {
             state.taskDraft = capped
             try? context.save()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+            Task {
+                await LiveActivityService.sync(entry: entry)
+            }
 
         case .startStopTapped:
             guard let entry, entry.isCompleted == false else { return }
@@ -55,6 +64,9 @@ final class HomeViewModel: ObservableObject {
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+            Task {
+                await LiveActivityService.sync(entry: entry)
+            }
             objectWillChange.send()
 
         case .resetConfirmed:
@@ -63,6 +75,9 @@ final class HomeViewModel: ObservableObject {
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+            Task {
+                await LiveActivityService.sync(entry: entry)
+            }
             objectWillChange.send()
 
         case .markDoneTapped:
@@ -75,6 +90,9 @@ final class HomeViewModel: ObservableObject {
             HapticsService.success(enabled: options.hapticsEnabled)
             try? context.save()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+            Task {
+                await LiveActivityService.sync(entry: entry)
+            }
             showUndoWindow(for: entry)
             objectWillChange.send()
 
@@ -86,6 +104,9 @@ final class HomeViewModel: ObservableObject {
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
+            Task {
+                await LiveActivityService.sync(entry: entry)
+            }
             state.showUndoToast = false
             state.lastCompletedAt = nil
             objectWillChange.send()

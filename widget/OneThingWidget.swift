@@ -236,9 +236,7 @@ struct WidgetSnapshotStore {
     static let shared = WidgetSnapshotStore()
     private let fileName = "widget-snapshot.json"
     private let appGroupIdentifiers: [String] = [
-        "group.com.qps.onething.widget",
-        "group.com.qps.onething",
-        "group.com.qps.com-shipapps-onething"
+        "group.com.qps.onething"
     ]
 
     private var snapshotURL: URL? {
@@ -266,5 +264,6 @@ struct WidgetSnapshotStore {
 struct OneThingWidgetsBundle: WidgetBundle {
     var body: some Widget {
         OneThingWidget()
+        OneThingLiveActivity()
     }
 }

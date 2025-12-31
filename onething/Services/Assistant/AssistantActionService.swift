@@ -31,6 +31,9 @@ enum AssistantActionService {
         entry.updatedAt = now
         try context.save()
         try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
+        Task {
+            await LiveActivityService.sync(entry: entry)
+        }
         return entry
     }
 
@@ -46,6 +49,9 @@ enum AssistantActionService {
         TimerService.start(entry: entry, now: now)
         try context.save()
         try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
+        Task {
+            await LiveActivityService.sync(entry: entry)
+        }
     }
 
     @MainActor
@@ -59,6 +65,9 @@ enum AssistantActionService {
         TimerService.stop(entry: entry, now: now)
         try context.save()
         try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
+        Task {
+            await LiveActivityService.sync(entry: entry)
+        }
     }
 
     @MainActor
@@ -81,5 +90,8 @@ enum AssistantActionService {
         entry.updatedAt = now
         try context.save()
         try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: dailyResetEnabled)
+        Task {
+            await LiveActivityService.sync(entry: entry)
+        }
     }
 }

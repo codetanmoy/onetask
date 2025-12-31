@@ -10,7 +10,7 @@ final class AIManager {
 
 #if canImport(FoundationModels)
     @available(iOS 26.0, *)
-    private let model = SystemLanguageModel.default
+    private var model: SystemLanguageModel { SystemLanguageModel.default }
 #endif
 
     enum Availability: Equatable {
