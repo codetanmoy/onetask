@@ -156,30 +156,12 @@ struct OneThingWidget: Widget {
     let kind: String = "OneThingWidget"
 
     var body: some WidgetConfiguration {
-        ActivityConfiguration(for: OneThingActivityAttributes.self) { context in
-            // Live Activity (Lock Screen / Dynamic Island)
-            OneThingLiveActivityView(context: context)
-        } dynamicIsland: { context in
-            DynamicIsland {
-                DynamicIslandExpandedRegion(.leading) {
-                    OneThingLiveActivityView(context: context)
-                }
-                DynamicIslandExpandedRegion(.trailing) {
-                    EmptyView()
-                }
-                DynamicIslandExpandedRegion(.bottom) {
-                    EmptyView()
-                }
-            } compactLeading: {
-                EmptyView()
-            } compactTrailing: {
-                EmptyView()
-            } minimal: {
-                EmptyView()
-            }
+        StaticConfiguration(kind: kind, provider: OneThingProvider()) { entry in
+            OneThingWidgetEntryView(entry: entry)
         }
         .configurationDisplayName("One thing status")
         .description("See your current task and timer at a glance.")
+        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
 

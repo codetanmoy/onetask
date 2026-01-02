@@ -17,56 +17,95 @@ struct OneThingActivityAttributes: ActivityAttributes {
 struct OneThingLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: OneThingActivityAttributes.self) { context in
-            // Lock Screen Banner
+            // Lock Screen Banner - also used for StandBy full screen
             LockScreenBannerView(context: context)
                 .widgetURL(URL(string: "onething://home"))
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded: Leading - just icon
-                DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "flame.fill")
-                        .font(.title2)
-                        .foregroundStyle(.orange)
+                // Expanded: Center region with horizontal layout
+                DynamicIslandExpandedRegion(.center) {
+                    HStack(alignment: .center,spacing: 20){
+                        ZStack{
+                            Circle()
+                                .fill(
+                                    LinearGradient(
+                                        colors: [.orange.opacity(0.25), .red.opacity(0.2)],
+                                        startPoint: .topLeading,
+                                        endPoint: .bottomTrailing
+                                    )
+                                )
+                                .frame(width: 36, height: 36)
+                            Image(systemName: "flame.fill")
+                                .font(.title3)
+                                .foregroundStyle(.orange)
+                        }
+                        
+                        Text(context.state.displayTask)
+                            .font(.title3.weight(.semibold))
+                            .multilineTextAlignment(.leading)
+                            .foregroundStyle(.primary)
+                            .lineLimit(2)
+                        
+                        Spacer()
+                        
+                        LiveTimer(
+                            baseSeconds: context.state.elapsedSeconds,
+                            startedAt: context.state.startedAt
+                        )
+                        .font(.title2.weight(.semibold).monospacedDigit())
+                        .foregroundStyle(.secondary)
+                    }
+                    
                 }
+            } compactLeading: {
+                // Compact leading - flame icon
+                    ZStack {
+                        Circle()
+                            .fill(
+                                LinearGradient(
+                                    colors: [.orange.opacity(0.25), .red.opacity(0.2)],
+                                    startPoint: .topLeading,
+                                    endPoint: .bottomTrailing
+                                )
+                            )
+                            .frame(width: 24, height: 24)
+                        Image(systemName: "flame.fill")
+                            .foregroundStyle(.orange)
+                            .padding(10)
+                    }
                 
-                // Expanded: Trailing - just timer
-                DynamicIslandExpandedRegion(.trailing) {
+            } compactTrailing: {
+                // Compact trailing - timer
+                HStack{
+                    
                     LiveTimer(
                         baseSeconds: context.state.elapsedSeconds,
                         startedAt: context.state.startedAt
                     )
-                    .font(.title2.weight(.bold).monospacedDigit())
-                    .foregroundStyle(.white)
+                    .font(.title2.weight(.semibold).monospacedDigit())
+                    .foregroundStyle(.secondary)
                     
-                }
-                
-                // Expanded: Bottom - task name only
-                DynamicIslandExpandedRegion(.bottom) {
                     Text(context.state.displayTask)
-                        .font(.headline)
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                        
+                        .font(.custom("", fixedSize: 6))
+                        .foregroundStyle(.primary)
                 }
-            } compactLeading: {
-                // Compact leading - small flame
-                Image(systemName: "flame.fill")
-                    .foregroundStyle(.orange)
-                    
-            } compactTrailing: {
-                // Compact trailing - timer
-                LiveTimer(
-                    baseSeconds: context.state.elapsedSeconds,
-                    startedAt: context.state.startedAt
-                )
-                .font(.caption.weight(.semibold).monospacedDigit())
-                .foregroundStyle(.white)
-              
             } minimal: {
-                // Minimal - just flame
-                Image(systemName: "flame.fill")
-                    .foregroundStyle(.orange)
-                    
+                // Minimal - visible orange circle with flame
+                ZStack {
+                    Circle()
+                        .fill(.orange)
+                        .frame(width: 24, height: 24)
+                    Image(systemName: "flame.fill")
+                        
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.orange, .red],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                        .symbolEffect(.pulse.wholeSymbol, options: .repeating)
+                }
             }
             .widgetURL(URL(string: "onething://home"))
         }
@@ -177,9 +216,9 @@ struct LockScreenBannerView: View {
     let context: ActivityViewContext<OneThingActivityAttributes>
     
     var body: some View {
-        VStack(alignment:.leading, spacing: 14) {
-            // Left - Flame icon with gradient background
-            HStack{
+        VStack(alignment: .leading, spacing: 14) {
+            // Top row - Flame icon and task name
+            HStack(spacing: 12) {
                 ZStack {
                     Circle()
                         .fill(
@@ -190,7 +229,7 @@ struct LockScreenBannerView: View {
                             )
                         )
                         .frame(width: 44, height: 44)
-                   
+                    
                     Image(systemName: "flame.fill")
                         .font(.system(size: 22, weight: .semibold))
                         .foregroundStyle(
@@ -201,22 +240,26 @@ struct LockScreenBannerView: View {
                             )
                         )
                 }
-                // Center - Task name and status
+                
                 Text(context.state.displayTask)
                     .font(.headline.weight(.semibold))
                     .foregroundStyle(.primary)
                     .lineLimit(1)
             }
-           
+            
+            // Bottom row - Status and timer
             HStack(spacing: 10) {
+                Circle()
+                    .fill(.clear)
+                .frame(width: 44, height: 44)
                 Circle()
                     .fill(.green)
                     .frame(width: 6, height: 6)
                 Text("Focus Time")
-                    .foregroundStyle(Color(.secondaryLabel))
+                    .foregroundStyle(.secondary)
                     .font(.subheadline)
                 Spacer()
-                // Right - Timer
+                
                 LiveTimer(
                     baseSeconds: context.state.elapsedSeconds,
                     startedAt: context.state.startedAt
@@ -224,14 +267,9 @@ struct LockScreenBannerView: View {
                 .font(.title.weight(.bold).monospacedDigit())
                 .foregroundStyle(.primary)
             }
-            
-            
-            
-        } .frame(minWidth: 300)
+        }
         .padding(.horizontal, 16)
-        .padding(.vertical, 12)
-        
-        
+        .padding(.vertical, 14)
         .activityBackgroundTint(Color(.systemBackground))
     }
 }
@@ -243,18 +281,16 @@ private struct LiveTimer: View {
     let startedAt: Date?
     
     var body: some View {
-        VStack{
-            if let startedAt {
-                // Use native timer interval for live updates
-                let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-baseSeconds))
-                Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
-                    .monospacedDigit()
-            } else {
-                // Static display when not running
-                Text(formatTime(baseSeconds))
-                    .monospacedDigit()
-            }
-        }.frame(minWidth: 200)
+        if let startedAt {
+            // Use native timer interval for live updates
+            let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-baseSeconds))
+            Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                .monospacedDigit()
+        } else {
+            // Static display when not running
+            Text(formatTime(baseSeconds))
+                .monospacedDigit()
+        }
     }
     
     private func formatTime(_ seconds: Int) -> String {
