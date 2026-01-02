@@ -103,9 +103,15 @@ struct OneThingWidgetEntryView: View {
 
     private var accessoryCircular: some View {
         VStack {
-            Text(timerString(entry.elapsedSeconds))
-                .font(.callout.monospacedDigit())
-                .foregroundStyle(.primary)
+            if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
+                Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+            } else {
+                Text(timerString(entry.elapsedSeconds))
+                    .monospacedDigit()
+                    .foregroundStyle(.primary)
+            }
             Text(entry.snapshot.status.shortLabel)
                 .font(.caption2)
                 .foregroundStyle(.secondary)
@@ -122,9 +128,15 @@ struct OneThingWidgetEntryView: View {
                     .font(.caption2)
                     .foregroundStyle(.secondary)
                 Spacer()
-                Text(timerString(entry.elapsedSeconds))
-                    .font(.caption2.monospacedDigit())
-                    .foregroundStyle(.secondary)
+                if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
+                    Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                } else {
+                    Text(timerString(entry.elapsedSeconds))
+                        .font(.caption2.monospacedDigit())
+                        .foregroundStyle(.secondary)
+                }
             }
         }
     }
@@ -144,12 +156,30 @@ struct OneThingWidget: Widget {
     let kind: String = "OneThingWidget"
 
     var body: some WidgetConfiguration {
-        StaticConfiguration(kind: kind, provider: OneThingProvider()) { entry in
-            OneThingWidgetEntryView(entry: entry)
+        ActivityConfiguration(for: OneThingActivityAttributes.self) { context in
+            // Live Activity (Lock Screen / Dynamic Island)
+            OneThingLiveActivityView(context: context)
+        } dynamicIsland: { context in
+            DynamicIsland {
+                DynamicIslandExpandedRegion(.leading) {
+                    OneThingLiveActivityView(context: context)
+                }
+                DynamicIslandExpandedRegion(.trailing) {
+                    EmptyView()
+                }
+                DynamicIslandExpandedRegion(.bottom) {
+                    EmptyView()
+                }
+            } compactLeading: {
+                EmptyView()
+            } compactTrailing: {
+                EmptyView()
+            } minimal: {
+                EmptyView()
+            }
         }
         .configurationDisplayName("One thing status")
         .description("See your current task and timer at a glance.")
-        .supportedFamilies([.systemSmall, .systemMedium, .accessoryCircular, .accessoryRectangular])
     }
 }
 

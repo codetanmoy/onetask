@@ -13,9 +13,9 @@ final class OneThingActivityManager {
     //   - accumulatedBeforeStart: Total elapsed seconds accumulated before this run segment
     func start(taskText: String, accumulatedBeforeStart: Int, taskIdentifier: String) async {
         // If there is an existing activity, end it before starting a new one
-        if let existing = activity {
+        if activity != nil {
             await end(finalElapsed: accumulatedBeforeStart, dismiss: false)
-            existing.dismiss(reason: .userInitiated)
+            self.activity = nil
         }
         let attributes = OneThingActivityAttributes(taskIdentifier: taskIdentifier)
         let state = OneThingActivityAttributes.ContentState(
@@ -24,7 +24,8 @@ final class OneThingActivityManager {
             startedAt: Date()
         )
         do {
-            let newActivity = try Activity.request(attributes: attributes, contentState: state, pushType: nil)
+            let content = ActivityContent(state: state, staleDate: nil)
+            let newActivity = try Activity.request(attributes: attributes, content: content, pushType: nil)
             self.activity = newActivity
         } catch {
             print("[OneThingActivityManager] Failed to start activity: \(error)")
@@ -39,11 +40,12 @@ final class OneThingActivityManager {
             elapsedSeconds: totalElapsed,
             startedAt: nil
         )
-        do {
-            try await activity.update(using: state)
-        } catch {
-            print("[OneThingActivityManager] Failed to pause activity: \(error)")
-        }
+        let content = ActivityContent(
+            state: state,
+            staleDate: nil,        // or a future Date if you want staleness
+            relevanceScore: 0      // optional; 0 is fine for most cases
+        )
+        await activity.update(content)
     }
 
     // Resume the timer: set startedAt to now and keep accumulated base.
@@ -55,11 +57,12 @@ final class OneThingActivityManager {
             elapsedSeconds: accumulatedBeforeResume,
             startedAt: Date()
         )
-        do {
-            try await activity.update(using: state)
-        } catch {
-            print("[OneThingActivityManager] Failed to resume activity: \(error)")
-        }
+        let content = ActivityContent(
+            state: state,
+            staleDate: nil,        // or a future Date if you want staleness
+            relevanceScore: 0      // optional; 0 is fine for most cases
+        )
+        await activity.update(content)
     }
 
     // Stop/end the activity and optionally dismiss it from the system UI.
@@ -70,11 +73,7 @@ final class OneThingActivityManager {
             elapsedSeconds: finalElapsed,
             startedAt: nil
         )
-        do {
-            try await activity.end(using: state, dismissalPolicy: dismiss ? .immediate : .default)
-            self.activity = nil
-        } catch {
-            print("[OneThingActivityManager] Failed to end activity: \(error)")
-        }
+        await activity.end(ActivityContent(state: state, staleDate: nil), dismissalPolicy: dismiss ? .immediate : .default)
+        self.activity = nil
     }
 }

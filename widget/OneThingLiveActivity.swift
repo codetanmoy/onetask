@@ -8,96 +8,260 @@ struct OneThingActivityAttributes: ActivityAttributes {
         let elapsedSeconds: Int
         let startedAt: Date?
     }
-
+    
     var taskIdentifier: String
 }
+
+// MARK: - Live Activity Widget Configuration
 
 struct OneThingLiveActivity: Widget {
     var body: some WidgetConfiguration {
         ActivityConfiguration(for: OneThingActivityAttributes.self) { context in
-            OneThingLiveActivityView(context: context)
+            // Lock Screen Banner
+            LockScreenBannerView(context: context)
                 .widgetURL(URL(string: "onething://home"))
-                .activityBackgroundTint(Color(.systemBackground))
-                .activitySystemActionForegroundColor(Color.accentColor)
         } dynamicIsland: { context in
             DynamicIsland {
+                // Expanded: Leading - just icon
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "timer")
-                        .symbolEffect(.bounce, options: .repeating)
-                        .font(.title3)
-                        .widgetURL(URL(string: "onething://home"))
+                    Image(systemName: "flame.fill")
+                        .font(.title2)
+                        .foregroundStyle(.orange)
                 }
-                DynamicIslandExpandedRegion(.center) {
-                    VStack(spacing: 6) {
-                        Text(context.state.displayTask)
-                            .font(.headline.weight(.semibold))
-                            .lineLimit(1)
-                        ShimmerBar()
-                        Text("Running")
-                            .font(.caption)
-                            .foregroundStyle(.secondary)
-                    }
-                    .widgetURL(URL(string: "onething://home"))
-                }
+                
+                // Expanded: Trailing - just timer
                 DynamicIslandExpandedRegion(.trailing) {
-                    LiveUpdatingElapsed(baseSeconds: context.state.elapsedSeconds, startedAt: context.state.startedAt)
-                        .font(.title3)
-                        .widgetURL(URL(string: "onething://home"))
+                    LiveTimer(
+                        baseSeconds: context.state.elapsedSeconds,
+                        startedAt: context.state.startedAt
+                    )
+                    .font(.title2.weight(.bold).monospacedDigit())
+                    .foregroundStyle(.white)
+                    
+                }
+                
+                // Expanded: Bottom - task name only
+                DynamicIslandExpandedRegion(.bottom) {
+                    Text(context.state.displayTask)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                        
                 }
             } compactLeading: {
-                Image(systemName: "timer")
-                    .symbolEffect(.pulse, options: .repeating)
-                    .font(.title3)
-                    .widgetURL(URL(string: "onething://home"))
+                // Compact leading - small flame
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(.orange)
+                    
             } compactTrailing: {
-                LiveUpdatingElapsed(baseSeconds: context.state.elapsedSeconds, startedAt: context.state.startedAt)
-                    .font(.caption)
-                    .widgetURL(URL(string: "onething://home"))
+                // Compact trailing - timer
+                LiveTimer(
+                    baseSeconds: context.state.elapsedSeconds,
+                    startedAt: context.state.startedAt
+                )
+                .font(.caption.weight(.semibold).monospacedDigit())
+                .foregroundStyle(.white)
+              
             } minimal: {
-                Circle()
-                    .fill(Color.accentColor)
-                    .frame(width: 8, height: 8)
-                    .widgetURL(URL(string: "onething://home"))
+                // Minimal - just flame
+                Image(systemName: "flame.fill")
+                    .foregroundStyle(.orange)
+                    
             }
+            .widgetURL(URL(string: "onething://home"))
         }
     }
 }
 
-private struct LiveUpdatingText: View {
-    let builder: () -> String
+// MARK: - Dynamic Island Expanded Views
+
+private struct ExpandedLeadingView: View {
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            Text(builder())
-                .monospacedDigit()
+        HStack(spacing: 8) {
+            Image(systemName: "flame.fill")
+                .font(.title2)
+                .foregroundStyle(
+                    LinearGradient(
+                        colors: [.orange, .red],
+                        startPoint: .top,
+                        endPoint: .bottom
+                    )
+                )
+                .symbolEffect(.pulse.wholeSymbol, options: .repeating)
+            
+            Text("Focus")
+                .font(.callout.weight(.semibold))
+                .foregroundStyle(.primary)
         }
     }
 }
 
-private struct LiveUpdatingElapsed: View {
+private struct ExpandedTrailingView: View {
+    let elapsedSeconds: Int
+    let startedAt: Date?
+    
+    var body: some View {
+        LiveTimer(baseSeconds: elapsedSeconds, startedAt: startedAt)
+            .font(.title2.weight(.bold).monospacedDigit())
+            .foregroundStyle(.primary)
+            .contentTransition(.numericText())
+    }
+}
+
+private struct ExpandedBottomView: View {
+    let taskText: String
+    
+    var body: some View {
+        VStack(spacing: 10) {
+            // Task text
+            Text(taskText)
+                .font(.subheadline.weight(.medium))
+                .foregroundStyle(.primary)
+                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            
+            // Animated progress bar
+            AnimatedProgressBar()
+        }
+        .padding(.top, 4)
+    }
+}
+
+// MARK: - Dynamic Island Compact Views
+
+private struct CompactLeadingView: View {
+    var body: some View {
+        Image(systemName: "flame.fill")
+            .font(.system(size: 14, weight: .semibold))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [.orange, .red],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+    }
+}
+
+private struct CompactTrailingView: View {
+    let elapsedSeconds: Int
+    let startedAt: Date?
+    
+    var body: some View {
+        LiveTimer(baseSeconds: elapsedSeconds, startedAt: startedAt)
+            .font(.system(size: 14, weight: .semibold).monospacedDigit())
+            .foregroundStyle(.primary)
+            .contentTransition(.numericText())
+    }
+}
+
+// MARK: - Dynamic Island Minimal View
+
+private struct MinimalView: View {
+    var body: some View {
+        Image(systemName: "flame.fill")
+            .font(.system(size: 12, weight: .bold))
+            .foregroundStyle(
+                LinearGradient(
+                    colors: [.orange, .red],
+                    startPoint: .top,
+                    endPoint: .bottom
+                )
+            )
+    }
+}
+
+// MARK: - Lock Screen Banner View
+
+struct LockScreenBannerView: View {
+    let context: ActivityViewContext<OneThingActivityAttributes>
+    
+    var body: some View {
+        VStack(alignment:.leading, spacing: 14) {
+            // Left - Flame icon with gradient background
+            HStack{
+                ZStack {
+                    Circle()
+                        .fill(
+                            LinearGradient(
+                                colors: [.orange.opacity(0.25), .red.opacity(0.2)],
+                                startPoint: .topLeading,
+                                endPoint: .bottomTrailing
+                            )
+                        )
+                        .frame(width: 44, height: 44)
+                   
+                    Image(systemName: "flame.fill")
+                        .font(.system(size: 22, weight: .semibold))
+                        .foregroundStyle(
+                            LinearGradient(
+                                colors: [.orange, .red],
+                                startPoint: .top,
+                                endPoint: .bottom
+                            )
+                        )
+                }
+                // Center - Task name and status
+                Text(context.state.displayTask)
+                    .font(.headline.weight(.semibold))
+                    .foregroundStyle(.primary)
+                    .lineLimit(1)
+            }
+           
+            HStack(spacing: 10) {
+                Circle()
+                    .fill(.green)
+                    .frame(width: 6, height: 6)
+                Text("Focus Time")
+                    .foregroundStyle(Color(.secondaryLabel))
+                    .font(.subheadline)
+                Spacer()
+                // Right - Timer
+                LiveTimer(
+                    baseSeconds: context.state.elapsedSeconds,
+                    startedAt: context.state.startedAt
+                )
+                .font(.title.weight(.bold).monospacedDigit())
+                .foregroundStyle(.primary)
+            }
+            
+            
+            
+        } .frame(minWidth: 300)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 12)
+        
+        
+        .activityBackgroundTint(Color(.systemBackground))
+    }
+}
+
+// MARK: - Live Timer Component
+
+private struct LiveTimer: View {
     let baseSeconds: Int
     let startedAt: Date?
-
-    @State private var viewStart = Date()
-
+    
     var body: some View {
-        TimelineView(.periodic(from: .now, by: 1)) { _ in
-            Text(formatted())
-                .monospacedDigit()
-        }
-        .onAppear { viewStart = Date() }
+        VStack{
+            if let startedAt {
+                // Use native timer interval for live updates
+                let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-baseSeconds))
+                Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                    .monospacedDigit()
+            } else {
+                // Static display when not running
+                Text(formatTime(baseSeconds))
+                    .monospacedDigit()
+            }
+        }.frame(minWidth: 200)
     }
-
-    private func formatted() -> String {
-        let delta: Int
-        if let startedAt {
-            delta = max(0, Int(Date().timeIntervalSince(startedAt)))
-        } else {
-            delta = max(0, Int(Date().timeIntervalSince(viewStart)))
-        }
-        let seconds = baseSeconds + delta
+    
+    private func formatTime(_ seconds: Int) -> String {
         let hrs = seconds / 3600
         let mins = (seconds % 3600) / 60
         let secs = seconds % 60
+        
         if hrs > 0 {
             return String(format: "%d:%02d:%02d", hrs, mins, secs)
         }
@@ -105,109 +269,72 @@ private struct LiveUpdatingElapsed: View {
     }
 }
 
-private struct ShimmerBar: View {
-    @State private var phase: CGFloat = -1
+// MARK: - Animated Progress Bar
+
+private struct AnimatedProgressBar: View {
+    @State private var offset: CGFloat = -1
+    
     var body: some View {
-        GeometryReader { geo in
-            let width = geo.size.width
-            let height = geo.size.height
-            ZStack {
-                RoundedRectangle(cornerRadius: height/2, style: .continuous)
-                    .fill(Color.secondary.opacity(0.2))
-                RoundedRectangle(cornerRadius: height/2, style: .continuous)
+        GeometryReader { geometry in
+            let width = geometry.size.width
+            
+            ZStack(alignment: .leading) {
+                // Background track
+                Capsule()
+                    .fill(Color.white.opacity(0.15))
+                
+                // Animated shimmer
+                Capsule()
                     .fill(
                         LinearGradient(
                             colors: [
-                                Color.accentColor.opacity(0.2),
-                                Color.accentColor.opacity(0.6),
-                                Color.accentColor.opacity(0.2)
+                                .clear,
+                                .white.opacity(0.4),
+                                .white.opacity(0.6),
+                                .white.opacity(0.4),
+                                .clear
                             ],
                             startPoint: .leading,
                             endPoint: .trailing
                         )
                     )
-                    .mask(
-                        Rectangle()
-                            .fill(
-                                LinearGradient(
-                                    gradient: Gradient(stops: [
-                                        .init(color: .clear, location: 0),
-                                        .init(color: .white, location: 0.2),
-                                        .init(color: .white, location: 0.5),
-                                        .init(color: .clear, location: 0.8)
-                                    ]),
-                                    startPoint: .leading,
-                                    endPoint: .trailing
-                                )
-                            )
-                            .offset(x: phase * width)
-                    )
+                    .frame(width: width * 0.4)
+                    .offset(x: offset * width)
             }
             .onAppear {
-                withAnimation(.linear(duration: 1.6).repeatForever(autoreverses: false)) {
-                    phase = 2
+                withAnimation(
+                    .linear(duration: 2.0)
+                    .repeatForever(autoreverses: false)
+                ) {
+                    offset = 1.4
                 }
             }
         }
-        .frame(height: 8)
+        .frame(height: 4)
+        .clipShape(Capsule())
     }
 }
 
-private struct OneThingLiveActivityView: View {
-    let context: ActivityViewContext<OneThingActivityAttributes>
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 6) {
-            HStack(spacing: 8) {
-                Image(systemName: "timer.circle.fill")
-                    .symbolRenderingMode(.hierarchical)
-                    .foregroundStyle(.accent)
-                    .font(.title2)
-                    .scaleEffect(1.0)
-                    .symbolEffect(.pulse, options: .repeating)
-                Text(context.state.displayTask)
-                    .font(.title2.weight(.semibold))
-                    .lineLimit(1)
-            }
-            LiveUpdatingElapsed(baseSeconds: context.state.elapsedSeconds, startedAt: context.state.startedAt)
-                .font(.title)
-            ShimmerBar()
-            Text("Running")
-                .font(.caption)
-                .foregroundStyle(.secondary)
-        }
-        .padding()
-        .frame(maxWidth: .infinity, alignment: .leading)
-    }
-}
+// MARK: - Helper Extensions
 
 private extension OneThingActivityAttributes.ContentState {
     var displayTask: String {
         let trimmed = taskText.trimmingCharacters(in: .whitespacesAndNewlines)
         if trimmed.isEmpty { return "OneThing running" }
-        if trimmed.count > 28 {
-            let prefix = trimmed.prefix(28)
+        if trimmed.count > 50 {
+            let prefix = trimmed.prefix(50)
             return "\(prefix)…"
         }
         return trimmed
     }
+}
 
-    func formattedElapsed() -> String {
-        let base = elapsedSeconds
-        guard let started = startedAt else {
-            return Self.timerString(seconds: base)
-        }
-        let delta = Int(Date().timeIntervalSince(started))
-        return Self.timerString(seconds: base + max(0, delta))
-    }
+// MARK: - Legacy View (for backwards compatibility if needed)
 
-    private static func timerString(seconds: Int) -> String {
-        let hrs = seconds / 3600
-        let mins = (seconds % 3600) / 60
-        let secs = seconds % 60
-        if hrs > 0 {
-            return String(format: "%d:%02d:%02d", hrs, mins, secs)
-        }
-        return String(format: "%02d:%02d", mins, secs)
+struct OneThingLiveActivityView: View {
+    let context: ActivityViewContext<OneThingActivityAttributes>
+    
+    var body: some View {
+        LockScreenBannerView(context: context)
     }
 }

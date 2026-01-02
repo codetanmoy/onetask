@@ -43,29 +43,28 @@ enum LiveActivityService {
         }
 
         let attributes = OneThingActivityAttributes(taskIdentifier: entry.id.uuidString)
-        let content = OneThingActivityAttributes.ContentState(
+        let contentState = OneThingActivityAttributes.ContentState(
             taskText: entry.taskText,
             elapsedSeconds: entry.elapsedSeconds,
             startedAt: entry.startedAt
         )
-        let stale = Date.now.addingTimeInterval(1)
 
         if let activity = currentActivity {
-            await activity.update(.init(state: content, staleDate: stale))
+            await activity.update(.init(state: contentState, staleDate: nil))
             return
         }
 
         // Avoid duplicate requests: if the system already has one (race with restore), use it.
         if let existing = activity(matching: entry) {
             currentActivity = existing
-            await existing.update(.init(state: content, staleDate: stale))
+            await existing.update(.init(state: contentState, staleDate: nil))
             return
         }
 
         do {
             currentActivity = try Activity<OneThingActivityAttributes>.request(
                 attributes: attributes,
-                content: .init(state: content, staleDate: stale),
+                content: .init(state: contentState, staleDate: nil),
                 pushType: nil
             )
         } catch {
@@ -88,4 +87,3 @@ enum LiveActivityService {
         currentActivity = nil
     }
 }
-
