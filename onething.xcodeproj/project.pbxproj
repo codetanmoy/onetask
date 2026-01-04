@@ -7,13 +7,12 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		AE8D695A2F0A98F2005E418A /* ReceiptParser in Frameworks */ = {isa = PBXBuildFile; productRef = AE8D69592F0A98F2005E418A /* ReceiptParser */; };
+		AE8D695C2F0A98F2005E418A /* RevenueCat in Frameworks */ = {isa = PBXBuildFile; productRef = AE8D695B2F0A98F2005E418A /* RevenueCat */; };
+		AE8D695E2F0A98F2005E418A /* RevenueCatUI in Frameworks */ = {isa = PBXBuildFile; productRef = AE8D695D2F0A98F2005E418A /* RevenueCatUI */; };
 		AEACD9FF2EFECB6500AFE240 /* WidgetKit.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AEACD9FE2EFECB6500AFE240 /* WidgetKit.framework */; };
 		AEACDA012EFECB6500AFE240 /* SwiftUI.framework in Frameworks */ = {isa = PBXBuildFile; fileRef = AEACDA002EFECB6500AFE240 /* SwiftUI.framework */; };
 		AEACDA122EFECB6600AFE240 /* widgetExtension.appex in Embed Foundation Extensions */ = {isa = PBXBuildFile; fileRef = AEACD9FC2EFECB6500AFE240 /* widgetExtension.appex */; settings = {ATTRIBUTES = (RemoveHeadersOnCopy, ); }; };
-		B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A90 /* widget/OneThingWidget.swift */; };
-		B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A91 /* widget/widgetBundle.swift */; };
-		B2E7B6D51F4B4AE880BE1A92 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A92 /* Assets.xcassets */; };
-		B2E7B6D51F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift in Sources */ = {isa = PBXBuildFile; fileRef = B2E7B6D11F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -103,6 +102,9 @@
 			isa = PBXFrameworksBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				AE8D695C2F0A98F2005E418A /* RevenueCat in Frameworks */,
+				AE8D695A2F0A98F2005E418A /* ReceiptParser in Frameworks */,
+				AE8D695E2F0A98F2005E418A /* RevenueCatUI in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,6 +196,9 @@
 			);
 			name = onething;
 			packageProductDependencies = (
+				AE8D69592F0A98F2005E418A /* ReceiptParser */,
+				AE8D695B2F0A98F2005E418A /* RevenueCat */,
+				AE8D695D2F0A98F2005E418A /* RevenueCatUI */,
 			);
 			productName = onething;
 			productReference = AEE1B8162EFD99B80072080F /* onething.app */;
@@ -207,7 +212,7 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = 1;
 				LastSwiftUpdateCheck = 2610;
-				LastUpgradeCheck = 2610;
+				LastUpgradeCheck = 2620;
 				TargetAttributes = {
 					AEACD9FB2EFECB6500AFE240 = {
 						CreatedOnToolsVersion = 26.1.1;
@@ -226,6 +231,9 @@
 			);
 			mainGroup = AEE1B80D2EFD99B80072080F;
 			minimizedProjectReferenceProxies = 1;
+			packageReferences = (
+				AE8D69582F0A98F2005E418A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */,
+			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = AEE1B8172EFD99B80072080F /* Products */;
 			projectDirPath = "";
@@ -242,7 +250,6 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B2E7B6D51F4B4AE880BE1A92 /* Assets.xcassets in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -260,9 +267,6 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
-				B2E7B6D51F4B4AE880BE1A90 /* widget/OneThingWidget.swift in Sources */,
-				B2E7B6D51F4B4AE880BE1A91 /* widget/widgetBundle.swift in Sources */,
-				B2E7B6D51F4B4AE880BE1A93 /* widget/OneThingLiveActivity.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -367,6 +371,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = onething/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OneThing;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -408,6 +413,7 @@
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = onething/Info.plist;
 				INFOPLIST_KEY_CFBundleDisplayName = OneThing;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.productivity";
 				INFOPLIST_KEY_NSSupportsLiveActivities = YES;
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UIApplicationSupportsIndirectInputEvents = YES;
@@ -495,6 +501,7 @@
 				MTL_FAST_MATH = YES;
 				ONLY_ACTIVE_ARCH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_ACTIVE_COMPILATION_CONDITIONS = "DEBUG $(inherited)";
 				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
 			};
@@ -552,6 +559,7 @@
 				MTL_ENABLE_DEBUG_INFO = NO;
 				MTL_FAST_MATH = YES;
 				SDKROOT = iphoneos;
+				STRING_CATALOG_GENERATE_SYMBOLS = YES;
 				SWIFT_COMPILATION_MODE = wholemodule;
 				VALIDATE_PRODUCT = YES;
 			};
@@ -588,6 +596,35 @@
 			defaultConfigurationName = Release;
 		};
 /* End XCConfigurationList section */
+
+/* Begin XCRemoteSwiftPackageReference section */
+		AE8D69582F0A98F2005E418A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/RevenueCat/purchases-ios-spm.git";
+			requirement = {
+				kind = upToNextMajorVersion;
+				minimumVersion = 5.52.1;
+			};
+		};
+/* End XCRemoteSwiftPackageReference section */
+
+/* Begin XCSwiftPackageProductDependency section */
+		AE8D69592F0A98F2005E418A /* ReceiptParser */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE8D69582F0A98F2005E418A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = ReceiptParser;
+		};
+		AE8D695B2F0A98F2005E418A /* RevenueCat */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE8D69582F0A98F2005E418A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCat;
+		};
+		AE8D695D2F0A98F2005E418A /* RevenueCatUI */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = AE8D69582F0A98F2005E418A /* XCRemoteSwiftPackageReference "purchases-ios-spm" */;
+			productName = RevenueCatUI;
+		};
+/* End XCSwiftPackageProductDependency section */
 	};
 	rootObject = AEE1B80E2EFD99B80072080F /* Project object */;
 }

@@ -35,11 +35,7 @@ struct OneThingWidgetEntryView: View {
     @Environment(\.widgetFamily) private var family
 
     var body: some View {
-        ZStack {
-            Color("WidgetBackground")
-            content
-                .padding()
-        }
+        content
     }
 
     @ViewBuilder
@@ -58,71 +54,187 @@ struct OneThingWidgetEntryView: View {
         }
     }
 
+    // MARK: - Small Widget
     private var smallView: some View {
-        VStack(spacing: 6) {
-            Text(entry.snapshot.status.label)
-                .font(.footnote)
-                .foregroundStyle(.secondary)
-            Text(entry.snapshot.displayTask)
-                .font(.headline)
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-            Text(timerString(entry.elapsedSeconds))
-                .font(.caption.monospacedDigit())
-                .foregroundStyle(.secondary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var mediumView: some View {
-        VStack(spacing: 12) {
-            Text(entry.snapshot.displayTask)
-                .font(.title3.weight(.semibold))
-                .multilineTextAlignment(.center)
-                .lineLimit(2)
-
-            statusRow
-
-            Text(timerString(entry.elapsedSeconds))
-                .font(.title2.monospacedDigit())
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-
-    private var statusRow: some View {
-        HStack(spacing: 6) {
-            Circle()
-                .fill(entry.snapshot.status.color)
-                .frame(width: 8, height: 8)
-            Text(entry.snapshot.status.label)
-                .font(.subheadline)
-                .foregroundStyle(.secondary)
-        }
-    }
-
-    private var accessoryCircular: some View {
-        VStack {
-            if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
-                Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
-                    .monospacedDigit()
+        ZStack {
+            // Premium gradient background
+            ContainerRelativeShape()
+                .fill(
+                    LinearGradient(
+                        colors: backgroundGradient,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            VStack(spacing: 8) {
+                // Status icon with glow
+                ZStack {
+                    Circle()
+                        .fill(entry.snapshot.status.color.opacity(0.2))
+                        .frame(width: 36, height: 36)
+                    
+                    Image(systemName: entry.snapshot.status.icon)
+                        .font(.title3.weight(.semibold))
+                        .foregroundStyle(entry.snapshot.status.color)
+                }
+                
+                Text(entry.snapshot.displayTask)
+                    .font(.subheadline.weight(.semibold))
+                    .multilineTextAlignment(.center)
+                    .lineLimit(2)
                     .foregroundStyle(.primary)
-            } else {
-                Text(timerString(entry.elapsedSeconds))
-                    .monospacedDigit()
-                    .foregroundStyle(.primary)
+                
+                // Timer with pill background - LIVE when running
+                Group {
+                    if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
+                        let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-entry.snapshot.elapsedSeconds))
+                        Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                    } else {
+                        Text(timerString(entry.elapsedSeconds))
+                            .font(.caption.weight(.semibold).monospacedDigit())
+                    }
+                }
+                .foregroundStyle(entry.snapshot.status == .running ? .white : .secondary)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 4)
+                .background(
+                    Capsule()
+                        .fill(entry.snapshot.status == .running 
+                              ? entry.snapshot.status.color 
+                              : Color(.systemGray5))
+                )
             }
-            Text(entry.snapshot.status.shortLabel)
-                .font(.caption2)
-                .foregroundStyle(.secondary)
+            .padding()
         }
     }
 
+    // MARK: - Medium Widget
+    private var mediumView: some View {
+        ZStack {
+            // Premium gradient background
+            ContainerRelativeShape()
+                .fill(
+                    LinearGradient(
+                        colors: backgroundGradient,
+                        startPoint: .topLeading,
+                        endPoint: .bottomTrailing
+                    )
+                )
+            
+            HStack(spacing: 16) {
+                // Left: Progress circle with timer
+                ZStack(alignment: .center) {
+                    // Background circle
+                    Circle()
+                        .stroke(Color(.systemGray4), lineWidth: 6)
+                        .frame(width: 80, height: 80)
+                    
+                    // Progress arc
+                    Circle()
+                        .trim(from: 0, to: progressValue)
+                        .stroke(
+                            entry.snapshot.status.gradient,
+                            style: StrokeStyle(lineWidth: 6, lineCap: .round)
+                        )
+                        .frame(width: 80, height: 80)
+                        .rotationEffect(.degrees(-90))
+                    
+                    // Timer text - LIVE when running (centered in circle)
+                    VStack(spacing: 2) {
+                        if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
+                            let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-entry.snapshot.elapsedSeconds))
+                            Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .monospacedDigit()
+                                .minimumScaleFactor(0.8)
+                                .multilineTextAlignment(.center)
+                        } else {
+                            Text(timerString(entry.elapsedSeconds))
+                                .font(.system(size: 14, weight: .bold, design: .rounded))
+                                .monospacedDigit()
+                                .multilineTextAlignment(.center)
+                        }
+                        
+                        if entry.snapshot.status == .running {
+                            Circle()
+                                .fill(.green)
+                                .frame(width: 6, height: 6)
+                        }
+                    }
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                }
+                .frame(width: 80, height: 80)
+                
+                // Right: Task and status
+                VStack(alignment: .leading, spacing: 8) {
+                    Text(entry.snapshot.displayTask)
+                        .font(.headline.weight(.semibold))
+                        .lineLimit(2)
+                        .foregroundStyle(.primary)
+                    
+                    // Status badge
+                    HStack(spacing: 6) {
+                        Image(systemName: entry.snapshot.status.icon)
+                            .font(.caption)
+                        Text(entry.snapshot.status.label)
+                            .font(.caption.weight(.medium))
+                    }
+                    .foregroundStyle(entry.snapshot.status.color)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 5)
+                    .background(
+                        Capsule()
+                            .fill(entry.snapshot.status.color.opacity(0.15))
+                    )
+                }
+                
+                Spacer(minLength: 0)
+            }
+            .padding()
+        }
+    }
+    
+    // MARK: - Accessory Circular
+    private var accessoryCircular: some View {
+        ZStack {
+            // Progress ring
+            Circle()
+                .stroke(Color.secondary.opacity(0.3), lineWidth: 4)
+            
+            Circle()
+                .trim(from: 0, to: progressValue)
+                .stroke(Color.primary, style: StrokeStyle(lineWidth: 4, lineCap: .round))
+                .rotationEffect(.degrees(-90))
+            
+            VStack(spacing: 0) {
+                if entry.snapshot.status == .running, let startedAt = entry.snapshot.startedAt {
+                    Text(timerInterval: startedAt...Date.distantFuture, countsDown: false)
+                        .font(.system(size: 12, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.primary)
+                } else {
+                    Text(timerString(entry.elapsedSeconds))
+                        .font(.system(size: 12, weight: .semibold))
+                        .monospacedDigit()
+                        .foregroundStyle(.primary)
+                }
+            }
+        }
+    }
+
+    // MARK: - Accessory Rectangular
     private var accessoryRectangular: some View {
         VStack(alignment: .leading, spacing: 4) {
-            Text(entry.snapshot.displayTask)
-                .font(.caption.weight(.semibold))
-                .lineLimit(2)
+            HStack(spacing: 4) {
+                Image(systemName: entry.snapshot.status.icon)
+                    .font(.caption2)
+                Text(entry.snapshot.displayTask)
+                    .font(.caption.weight(.semibold))
+                    .lineLimit(1)
+            }
+            
             HStack(spacing: 4) {
                 Text(entry.snapshot.status.label)
                     .font(.caption2)
@@ -138,6 +250,26 @@ struct OneThingWidgetEntryView: View {
                         .foregroundStyle(.secondary)
                 }
             }
+        }
+    }
+    
+    // MARK: - Helpers
+    
+    private var progressValue: Double {
+        // 1 hour = full circle
+        min(Double(entry.elapsedSeconds) / 3600.0, 1.0)
+    }
+    
+    private var backgroundGradient: [Color] {
+        switch entry.snapshot.status {
+        case .running:
+            return [Color(.systemBackground), Color.green.opacity(0.05)]
+        case .done:
+            return [Color(.systemBackground), Color.green.opacity(0.1)]
+        case .stopped:
+            return [Color(.systemBackground), Color.orange.opacity(0.05)]
+        case .noTask:
+            return [Color(.systemBackground), Color(.systemGray6)]
         }
     }
 
@@ -236,10 +368,48 @@ enum WidgetStatus: String, Codable {
 
     var color: Color {
         switch self {
-        case .running: return .accentColor
-        case .stopped: return .gray
+        case .running: return .green
+        case .stopped: return .orange
         case .done: return .green
         case .noTask: return .secondary
+        }
+    }
+    
+    var icon: String {
+        switch self {
+        case .running: return "flame.fill"
+        case .stopped: return "pause.circle.fill"
+        case .done: return "checkmark.circle.fill"
+        case .noTask: return "plus.circle"
+        }
+    }
+    
+    var gradient: LinearGradient {
+        switch self {
+        case .running:
+            return LinearGradient(
+                colors: [.green, .mint],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .stopped:
+            return LinearGradient(
+                colors: [.orange, .yellow],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .done:
+            return LinearGradient(
+                colors: [.green, .mint],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        case .noTask:
+            return LinearGradient(
+                colors: [.secondary, .secondary.opacity(0.7)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
         }
     }
 }

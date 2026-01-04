@@ -572,7 +572,7 @@ final class OneThingAssistantManager: ObservableObject {
 
     func clearRunningStatus() {
         if case .running = messages.last?.kind {
-            withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
+            _ = withAnimation(.spring(response: 0.32, dampingFraction: 0.9)) {
                 messages.removeLast()
             }
         }

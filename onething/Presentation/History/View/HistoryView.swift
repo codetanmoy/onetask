@@ -23,18 +23,28 @@ struct HistoryView: View {
 
             Section {
                 if selectedDayEntries.isEmpty {
-                    VStack(spacing: 10) {
-                        Image(systemName: "calendar")
-                            .font(.title2)
-                            .foregroundStyle(.secondary)
-                        Text("No entries")
-                            .font(.headline)
-                        Text("Pick another date.")
-                            .font(.footnote)
-                            .foregroundStyle(.secondary)
+                    VStack(spacing: 16) {
+                        ZStack {
+                            Circle()
+                                .fill(.tint.opacity(0.1))
+                                .frame(width: 64, height: 64)
+                            
+                            Image(systemName: "calendar.badge.clock")
+                                .font(.title)
+                                .foregroundStyle(.tint)
+                        }
+                        
+                        VStack(spacing: 4) {
+                            Text("No entries")
+                                .font(.headline)
+                            Text("Pick another date to view history.")
+                                .font(.footnote)
+                                .foregroundStyle(.secondary)
+                                .multilineTextAlignment(.center)
+                        }
                     }
                     .frame(maxWidth: .infinity, alignment: .center)
-                    .padding(.vertical, 24)
+                    .padding(.vertical, 32)
                 } else {
                     ForEach(selectedDayEntries) { entry in
                         NavigationLink {

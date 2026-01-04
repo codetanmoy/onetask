@@ -1,6 +1,7 @@
 import ActivityKit
 import WidgetKit
 import SwiftUI
+import AppIntents
 
 struct OneThingActivityAttributes: ActivityAttributes {
     public struct ContentState: Codable, Hashable {
@@ -22,90 +23,79 @@ struct OneThingLiveActivity: Widget {
                 .widgetURL(URL(string: "onething://home"))
         } dynamicIsland: { context in
             DynamicIsland {
-                // Expanded: Center region with horizontal layout
+                // Expanded view - task focused
+                DynamicIslandExpandedRegion(.leading) {
+                    Image(systemName: "flame.fill")
+                        .font(.title2)
+                        .foregroundStyle(.orange)
+                        .symbolEffect(.pulse.wholeSymbol, options: .repeating)
+                        .frame(width: 44, height: 44)
+                }
+                
                 DynamicIslandExpandedRegion(.center) {
-                    HStack(alignment: .center,spacing: 20){
-                        ZStack{
-                            Circle()
-                                .fill(
-                                    LinearGradient(
-                                        colors: [.orange.opacity(0.25), .red.opacity(0.2)],
-                                        startPoint: .topLeading,
-                                        endPoint: .bottomTrailing
-                                    )
-                                )
-                                .frame(width: 36, height: 36)
-                            Image(systemName: "flame.fill")
-                                .font(.title3)
-                                .foregroundStyle(.orange)
+                    Text(context.state.displayTask)
+                        .font(.headline)
+                        .foregroundStyle(.white)
+                        .lineLimit(2)
+                        .multilineTextAlignment(.center)
+                }
+                
+                DynamicIslandExpandedRegion(.trailing) {
+                    VStack(alignment: .trailing, spacing: 2) {
+                        if let startedAt = context.state.startedAt {
+                            let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-context.state.elapsedSeconds))
+                            Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                                .font(.title3.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.white)
+                        } else {
+                            Text(formatCompactTime(context.state.elapsedSeconds))
+                                .font(.title3.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.secondary)
                         }
                         
-                        Text(context.state.displayTask)
-                            .font(.title3.weight(.semibold))
-                            .multilineTextAlignment(.leading)
-                            .foregroundStyle(.primary)
-                            .lineLimit(2)
-                        
-                        Spacer()
-                        
-                        LiveTimer(
-                            baseSeconds: context.state.elapsedSeconds,
-                            startedAt: context.state.startedAt
-                        )
-                        .font(.title2.weight(.semibold).monospacedDigit())
-                        .foregroundStyle(.secondary)
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(context.state.startedAt != nil ? .green : .orange)
+                                .frame(width: 6, height: 6)
+                            Text(context.state.startedAt != nil ? "Focus" : "Paused")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
                     }
-                    
                 }
+                
             } compactLeading: {
                 // Compact leading - flame icon
-                    ZStack {
-                        Circle()
-                            .fill(
-                                LinearGradient(
-                                    colors: [.orange.opacity(0.25), .red.opacity(0.2)],
-                                    startPoint: .topLeading,
-                                    endPoint: .bottomTrailing
-                                )
-                            )
-                            .frame(width: 24, height: 24)
-                        Image(systemName: "flame.fill")
-                            .foregroundStyle(.orange)
-                            .padding(10)
-                    }
+                Image(systemName: "flame.fill")
+                    .font(.body)
+                    .foregroundStyle(.orange)
                 
             } compactTrailing: {
                 // Compact trailing - timer
                 HStack{
+                    if let startedAt = context.state.startedAt {
+                        let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-context.state.elapsedSeconds))
+                        Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                            .font(.body.weight(.medium).monospacedDigit())
+                            .foregroundStyle(.white)
+                    } else {
+                        Text(formatCompactTime(context.state.elapsedSeconds))
+                            .font(.body.weight(.medium).monospacedDigit())
+                            .foregroundStyle(.secondary)
+                    }
                     
-                    LiveTimer(
-                        baseSeconds: context.state.elapsedSeconds,
-                        startedAt: context.state.startedAt
-                    )
-                    .font(.title2.weight(.semibold).monospacedDigit())
-                    .foregroundStyle(.secondary)
-                    
-                    Text(context.state.displayTask)
-                        .font(.custom("", fixedSize: 6))
-                        .foregroundStyle(.primary)
+                    Text("Focus")
+                        .font(.caption2)
+                        .multilineTextAlignment(.leading)
+                        .lineLimit(2)
+                        .foregroundStyle(Color.secondary)
                 }
+           
             } minimal: {
-                // Minimal - visible orange circle with flame
-                ZStack {
-                    Circle()
-                        .fill(.orange)
-                        .frame(width: 24, height: 24)
-                    Image(systemName: "flame.fill")
-                        
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: [.orange, .red],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
-                        .symbolEffect(.pulse.wholeSymbol, options: .repeating)
-                }
+                // Minimal - just flame icon
+                Image(systemName: "flame.fill")
+                    .font(.body)
+                    .foregroundStyle(.orange)
             }
             .widgetURL(URL(string: "onething://home"))
         }
@@ -214,63 +204,153 @@ private struct MinimalView: View {
 
 struct LockScreenBannerView: View {
     let context: ActivityViewContext<OneThingActivityAttributes>
+    @State private var isPulsing = false
+    
+    // Use context state directly - this is what Activity.update() modifies
+    private var isRunning: Bool {
+        context.state.startedAt != nil
+    }
+    
+    private var displayTask: String {
+        context.state.displayTask
+    }
+    
+    private var elapsedSeconds: Int {
+        context.state.elapsedSeconds
+    }
     
     var body: some View {
-        VStack(alignment: .leading, spacing: 14) {
-            // Top row - Flame icon and task name
-            HStack(spacing: 12) {
+        VStack(spacing: 0) {
+            HStack(spacing: 16) {
+                // Left: Timer ring with icon
                 ZStack {
                     Circle()
-                        .fill(
+                        .stroke(Color.white.opacity(0.15), lineWidth: 4)
+                        .frame(width: 56, height: 56)
+                    
+                    Circle()
+                        .trim(from: 0, to: progressValue)
+                        .stroke(
                             LinearGradient(
-                                colors: [.orange.opacity(0.25), .red.opacity(0.2)],
+                                colors: isRunning ? [.orange, .red] : [.gray, .gray.opacity(0.7)],
                                 startPoint: .topLeading,
                                 endPoint: .bottomTrailing
-                            )
+                            ),
+                            style: StrokeStyle(lineWidth: 4, lineCap: .round)
                         )
-                        .frame(width: 44, height: 44)
+                        .frame(width: 56, height: 56)
+                        .rotationEffect(.degrees(-90))
                     
-                    Image(systemName: "flame.fill")
-                        .font(.system(size: 22, weight: .semibold))
+                    Image(systemName: isRunning ? "flame.fill" : "pause.fill")
+                        .font(.title2.weight(.semibold))
                         .foregroundStyle(
                             LinearGradient(
-                                colors: [.orange, .red],
+                                colors: isRunning ? [.orange, .red] : [.gray, .gray],
                                 startPoint: .top,
                                 endPoint: .bottom
                             )
                         )
+                        .scaleEffect(isRunning && isPulsing ? 1.1 : 1.0)
+                        .shadow(color: isRunning ? .orange.opacity(0.5) : .clear, radius: isPulsing ? 8 : 4)
+                }
+                .onAppear {
+                    withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
+                        isPulsing = true
+                    }
                 }
                 
-                Text(context.state.displayTask)
-                    .font(.headline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                    .lineLimit(1)
-            }
-            
-            // Bottom row - Status and timer
-            HStack(spacing: 10) {
-                Circle()
-                    .fill(.clear)
-                .frame(width: 44, height: 44)
-                Circle()
-                    .fill(.green)
-                    .frame(width: 6, height: 6)
-                Text("Focus Time")
-                    .foregroundStyle(.secondary)
-                    .font(.subheadline)
-                Spacer()
+                // Center: Task and timer
+                VStack(alignment: .leading, spacing: 6) {
+                    Text(displayTask)
+                        .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(.primary)
+                        .lineLimit(2)
+                        .fixedSize(horizontal: false, vertical: true)
+                    
+                    HStack(spacing: 8) {
+                        HStack(spacing: 4) {
+                            Circle()
+                                .fill(isRunning ? .green : .orange)
+                                .frame(width: 6, height: 6)
+                            Text(isRunning ? "Focus" : "Paused")
+                                .font(.caption2)
+                                .foregroundStyle(.secondary)
+                        }
+                        
+                        // Timer - LIVE when running, STATIC when paused
+                        if isRunning, let startedAt = context.state.startedAt {
+                            // Live counting timer
+                            let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-elapsedSeconds))
+                            Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
+                                .font(.title3.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.primary)
+                        } else {
+                            // Static paused timer
+                            Text(formatTime(elapsedSeconds))
+                                .font(.title3.weight(.bold).monospacedDigit())
+                                .foregroundStyle(.primary)
+                        }
+                    }
+                }
                 
-                LiveTimer(
-                    baseSeconds: context.state.elapsedSeconds,
-                    startedAt: context.state.startedAt
-                )
-                .font(.title.weight(.bold).monospacedDigit())
-                .foregroundStyle(.primary)
+                Spacer(minLength: 8)
+                
+                // Right: Action buttons
+                VStack(spacing: 8) {
+                    if isRunning {
+                        Button(intent: PauseTimerIntent()) {
+                            Image(systemName: "pause.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(Circle().fill(.orange))
+                        }
+                        .buttonStyle(.plain)
+                    } else {
+                        Button(intent: ResumeTimerIntent()) {
+                            Image(systemName: "play.fill")
+                                .font(.subheadline.weight(.semibold))
+                                .foregroundStyle(.white)
+                                .frame(width: 36, height: 36)
+                                .background(Circle().fill(.blue))
+                        }
+                        .buttonStyle(.plain)
+                    }
+                    
+                    Button(intent: CompleteTaskIntent()) {
+                        Image(systemName: "checkmark")
+                            .font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .frame(width: 36, height: 36)
+                            .background(Circle().fill(.green))
+                    }
+                    .buttonStyle(.plain)
+                }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 14)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .activityBackgroundTint(Color(.systemBackground))
+        .activityBackgroundTint(Color(.systemBackground).opacity(0.95))
+    }
+    
+    private var progressValue: Double {
+        let total: Int
+        if isRunning, let startedAt = context.state.startedAt {
+            total = elapsedSeconds + Int(Date().timeIntervalSince(startedAt))
+        } else {
+            total = elapsedSeconds
+        }
+        return min(Double(total) / 3600.0, 1.0)
+    }
+    
+    private func formatTime(_ seconds: Int) -> String {
+        let hrs = seconds / 3600
+        let mins = (seconds % 3600) / 60
+        let secs = seconds % 60
+        if hrs > 0 {
+            return String(format: "%d:%02d:%02d", hrs, mins, secs)
+        }
+        return String(format: "%02d:%02d", mins, secs)
     }
 }
 
@@ -363,6 +443,26 @@ private extension OneThingActivityAttributes.ContentState {
         }
         return trimmed
     }
+    
+    var shortTask: String {
+        let trimmed = taskText.trimmingCharacters(in: .whitespacesAndNewlines)
+        if trimmed.isEmpty { return "Focus" }
+        if trimmed.count > 12 {
+            let prefix = trimmed.prefix(12)
+            return "\(prefix)…"
+        }
+        return trimmed
+    }
+}
+
+private func formatCompactTime(_ seconds: Int) -> String {
+    let hrs = seconds / 3600
+    let mins = (seconds % 3600) / 60
+    let secs = seconds % 60
+    if hrs > 0 {
+        return String(format: "%d:%02d:%02d", hrs, mins, secs)
+    }
+    return String(format: "%d:%02d", mins, secs)
 }
 
 // MARK: - Legacy View (for backwards compatibility if needed)

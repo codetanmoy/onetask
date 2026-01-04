@@ -52,8 +52,16 @@ struct HomeView: View {
         .onChange(of: scenePhase) { _, newPhase in
             guard newPhase == .active else { return }
             viewModel.handle(.onAppear, context: modelContext, options: options)
+            
+            // Check for and process any pending widget actions
+            WidgetActionService.shared.checkPendingAction()
+            WidgetActionService.shared.processPendingAction(
+                context: modelContext,
+                options: options,
+                viewModel: viewModel
+            )
         }
-        .onChange(of: isAssistantPresented) { presented in
+        .onChange(of: isAssistantPresented) { presented, _ in
             guard presented == false else { return }
             viewModel.handle(.onAppear, context: modelContext, options: options)
         }

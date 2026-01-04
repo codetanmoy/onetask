@@ -3,224 +3,201 @@ import SwiftUI
 struct OnboardingView: View {
     @Binding var isComplete: Bool
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
-
-    @State private var pageIndex: Int = 0
-    @State private var symbolVisible: Bool = false
-    @State private var textVisible: Bool = false
-    @State private var revealedSteps: Int = 0
-    @State private var animationTask: Task<Void, Never>?
-
-    private let steps: [OnboardingStep] = [
-        .init(symbol: .sf("square.and.pencil"), text: "Pick one task"),
-        .init(symbol: .text("•", size: 18), text: "Start the timer"),
-        .init(symbol: .text("✓", size: 20), text: "Mark it done")
+    @Environment(\.colorScheme) private var colorScheme
+    
+    @State private var currentPage: Int = 0
+    
+    private let pages: [OnboardingPage] = [
+        OnboardingPage(
+            icon: "brain.head.profile",
+            title: "One Task",
+            subtitle: "One Focus",
+            description: "Stop juggling. Pick one thing and give it your full attention.",
+            accentColor: .red
+        ),
+        OnboardingPage(
+            icon: "timer",
+            title: "Start Timer",
+            subtitle: "Track Progress",
+            description: "Simple timer runs while you work. See exactly where your time goes.",
+            accentColor: .red
+        ),
+        OnboardingPage(
+            icon: "checkmark.circle.fill",
+            title: "Get It Done",
+            subtitle: "Feel Accomplished",
+            description: "Complete your task. Build momentum. Repeat tomorrow.",
+            accentColor: .green
+        )
     ]
-
+    
+    // Theme-aware colors
+    private var backgroundColor: Color {
+        colorScheme == .dark ? Color.black : Color.white
+    }
+    
+    private var primaryTextColor: Color {
+        colorScheme == .dark ? Color.white : Color.black
+    }
+    
+    private var secondaryTextColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.6) : Color.black.opacity(0.6)
+    }
+    
+    private var buttonBackgroundColor: Color {
+        colorScheme == .dark ? Color.white : Color.black
+    }
+    
+    private var buttonTextColor: Color {
+        colorScheme == .dark ? Color.black : Color.white
+    }
+    
+    private var indicatorInactiveColor: Color {
+        colorScheme == .dark ? Color.white.opacity(0.3) : Color.black.opacity(0.3)
+    }
+    
     var body: some View {
         ZStack {
-            Color(.systemBackground)
+            // Background
+            backgroundColor
                 .ignoresSafeArea()
-
-            VStack {
+            
+            VStack(spacing: 0) {
                 Spacer()
-                symbol
-                    .scaleEffect(symbolVisible ? 1 : 0.96)
-                    .opacity(symbolVisible ? 1 : 0)
-                    .animation(.easeOut(duration: 0.2), value: symbolVisible)
-                    .padding(.bottom, 20)
-
-                VStack(spacing: 12) {
-                    Text(pageTitle)
-                        .font(.largeTitle.weight(.semibold))
-                        .multilineTextAlignment(.center)
-
-                    if pageIndex == 0 {
-                        Text("Finish one thing today.")
-                            .font(.title3)
-                            .foregroundStyle(.secondary)
-                            .multilineTextAlignment(.center)
-                            .opacity(textVisible ? 1 : 0)
-                            .offset(y: textVisible ? 0 : 12)
-                            .animation(.easeOut(duration: 0.22), value: textVisible)
-                    } else {
-                        VStack(spacing: 18) {
-                            ForEach(steps.indices, id: \.self) { index in
-                                StepRow(step: steps[index])
-                                    .opacity(revealedSteps > index ? 1 : 0)
-                                    .offset(y: revealedSteps > index ? 0 : 8)
-                                    .animation(.easeOut(duration: 0.22).delay(Double(index) * 0.08), value: revealedSteps)
+                
+                // Page content
+                pageContent
+                
+                Spacer()
+                
+                // Page indicator
+                HStack(spacing: 8) {
+                    ForEach(pages.indices, id: \.self) { index in
+                        Circle()
+                            .fill(currentPage == index ? primaryTextColor : indicatorInactiveColor)
+                            .frame(width: 8, height: 8)
+                    }
+                }
+                .padding(.bottom, 48)
+                
+                // Buttons
+                VStack(spacing: 16) {
+                    Button {
+                        if currentPage < pages.count - 1 {
+                            withAnimation(.easeInOut(duration: 0.3)) {
+                                currentPage += 1
                             }
-
-                            Text("No lists. No planning.")
-                                .font(.subheadline)
-                                .foregroundStyle(.secondary)
-                                .opacity(textVisible ? 1 : 0)
-                                .offset(y: textVisible ? 0 : 8)
-                                .animation(.easeOut(duration: 0.22), value: textVisible)
+                        } else {
+                            finishOnboarding()
+                        }
+                    } label: {
+                        HStack(spacing: 8) {
+                            Text(currentPage < pages.count - 1 ? "Continue" : "Get Started")
+                                .font(.headline.weight(.semibold))
+                            
+                            Image(systemName: "arrow.right")
+                                .font(.headline)
+                        }
+                        .foregroundColor(buttonTextColor)
+                        .frame(maxWidth: .infinity)
+                        .frame(height: 56)
+                        .background(buttonBackgroundColor)
+                        .clipShape(RoundedRectangle(cornerRadius: 16))
+                    }
+                    
+                    if currentPage < pages.count - 1 {
+                        Button {
+                            finishOnboarding()
+                        } label: {
+                            Text("Skip")
+                                .font(.subheadline.weight(.medium))
+                                .foregroundStyle(secondaryTextColor)
                         }
                     }
                 }
                 .padding(.horizontal, 32)
-                .frame(maxWidth: 360)
-
-                Spacer()
-
-                footerButtons
-                    .padding(.horizontal, 32)
-                    .padding(.bottom, 24)
+                .padding(.bottom, 48)
             }
         }
-        .onAppear {
-            scheduleAnimations()
-        }
-        .onChange(of: pageIndex) { _ in
-            scheduleAnimations()
-        }
+        .gesture(
+            DragGesture()
+                .onEnded { value in
+                    if value.translation.width < -50 && currentPage < pages.count - 1 {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            currentPage += 1
+                        }
+                    } else if value.translation.width > 50 && currentPage > 0 {
+                        withAnimation(.easeInOut(duration: 0.3)) {
+                            currentPage -= 1
+                        }
+                    }
+                }
+        )
     }
-
-    private var symbol: some View {
-        Group {
-            if pageIndex == 0 {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 88, weight: .regular))
-                    .foregroundStyle(.secondary)
-            } else {
-                Image(systemName: "checkmark.circle")
-                    .font(.system(size: 52, weight: .regular))
-                    .foregroundStyle(.secondary)
+    
+    private var pageContent: some View {
+        VStack(spacing: 40) {
+            // Icon
+            ZStack {
+                Circle()
+                    .stroke(pages[currentPage].accentColor.opacity(0.3), lineWidth: 2)
+                    .frame(width: 120, height: 120)
+                
+                Image(systemName: pages[currentPage].icon)
+                    .font(.system(size: 48, weight: .light))
+                    .foregroundStyle(pages[currentPage].accentColor)
+                    .symbolEffect(.pulse.wholeSymbol, options: .repeating.speed(0.5), isActive: true)
             }
-        }
-    }
-
-    private var pageTitle: String {
-        pageIndex == 0 ? "One task. One timer." : "That’s it."
-    }
-
-    private var footerButtons: some View {
-        HStack(spacing: 16) {
-            Button {
-                finishOnboarding()
-            } label: {
-                Text("Skip")
-                    .font(.callout.weight(.medium))
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .background(Color(.systemGray5))
-                    .foregroundStyle(.primary)
-                    .clipShape(Capsule())
+            .animation(.easeInOut(duration: 0.3), value: currentPage)
+            
+            // Text content
+            VStack(spacing: 16) {
+                VStack(spacing: 8) {
+                    Text(pages[currentPage].title)
+                        .font(.system(size: 36, weight: .bold, design: .default))
+                        .foregroundColor(primaryTextColor)
+                    
+                    Text(pages[currentPage].subtitle)
+                        .font(.system(size: 36, weight: .bold, design: .default))
+                        .foregroundColor(pages[currentPage].accentColor)
+                }
+                .multilineTextAlignment(.center)
+                
+                Text(pages[currentPage].description)
+                    .font(.body)
+                    .foregroundColor(secondaryTextColor)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal, 24)
+                    .padding(.top, 8)
             }
-
-            Button {
-                primaryAction()
-            } label: {
-                Text(primaryButtonTitle)
-                    .font(.callout.weight(.medium))
-                    .frame(maxWidth: .infinity, minHeight: 48)
-                    .foregroundColor(.white)
-                    .background(Color.accentColor)
-                    .clipShape(Capsule())
-            }
+            .animation(.easeInOut(duration: 0.3), value: currentPage)
         }
+        .padding(.horizontal, 32)
     }
-
-    private var primaryButtonTitle: String {
-        pageIndex == 0 ? "Continue" : "Start"
-    }
-
-    private func primaryAction() {
-        if pageIndex == 0 {
-            withAnimation(.easeInOut(duration: 0.26)) {
-                pageIndex = 1
-            }
-        } else {
-            finishOnboarding()
-        }
-    }
-
+    
     private func finishOnboarding() {
-        animationTask?.cancel()
         withAnimation(.easeInOut(duration: 0.3)) {
             isComplete = true
         }
     }
-
-    private func scheduleAnimations() {
-        symbolVisible = false
-        textVisible = false
-        revealedSteps = reduceMotion ? steps.count : 0
-        animationTask?.cancel()
-
-        if reduceMotion {
-            symbolVisible = true
-            textVisible = true
-            return
-        }
-
-        animationTask = Task.detached(priority: .userInitiated) { @MainActor in
-            symbolVisible = true
-            try? await Task.sleep(nanoseconds: 120_000_000)
-            textVisible = true
-            if pageIndex == 1 {
-                for index in steps.indices {
-                    if Task.isCancelled { return }
-                    try? await Task.sleep(nanoseconds: 80_000_000)
-                    revealedSteps = index + 1
-                }
-            }
-        }
-    }
 }
 
-private struct StepRow: View {
-    let step: OnboardingStep
+// MARK: - Onboarding Page Model
 
-    var body: some View {
-        HStack(spacing: 14) {
-            step.symbol.view
-                .font(.system(size: step.symbol.size, weight: .medium))
-                .foregroundStyle(.secondary)
-                .frame(width: 32, height: 32, alignment: .center)
-
-            Text(step.text)
-                .font(.title3.weight(.semibold))
-                .foregroundStyle(.primary)
-        }
-        .frame(maxWidth: .infinity)
-        .multilineTextAlignment(.center)
-    }
+private struct OnboardingPage {
+    let icon: String
+    let title: String
+    let subtitle: String
+    let description: String
+    let accentColor: Color
 }
 
-private struct OnboardingStep {
-    let symbol: OnboardingStepSymbol
-    let text: String
-}
-
-private struct OnboardingStepSymbol {
-    let type: SymbolType
-    let size: CGFloat
-
-    var view: some View {
-        switch type {
-        case let .sf(name):
-            AnyView(Image(systemName: name))
-        case let .text(content):
-            AnyView(Text(content))
-        }
-    }
-
-    enum SymbolType {
-        case sf(String)
-        case text(String)
-    }
-
-    static func sf(_ name: String, size: CGFloat = 20) -> OnboardingStepSymbol {
-        .init(type: .sf(name), size: size)
-    }
-
-    static func text(_ content: String, size: CGFloat = 20) -> OnboardingStepSymbol {
-        .init(type: .text(content), size: size)
-    }
-}
-
-#Preview {
+#Preview("Light") {
     OnboardingView(isComplete: .constant(false))
+        .preferredColorScheme(.light)
+}
+
+#Preview("Dark") {
+    OnboardingView(isComplete: .constant(false))
+        .preferredColorScheme(.dark)
 }

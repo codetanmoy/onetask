@@ -4,6 +4,7 @@ import SwiftData
 struct DayDetailView: View {
     @Environment(\.modelContext) private var modelContext
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.colorScheme) private var colorScheme
 
     @AppStorage(UserPreferences.hapticsEnabledKey) private var hapticsEnabled: Bool = true
     @AppStorage(UserPreferences.dailyResetEnabledKey) private var dailyResetEnabled: Bool = true
@@ -15,57 +16,159 @@ struct DayDetailView: View {
     let entry: DayEntry
 
     var body: some View {
-        Form {
-            Section("Task") {
-                if entry.isCompleted || !isEditingTask {
-                    Text(entry.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "—" : entry.taskText)
-                } else {
-                    TextField("Task", text: $taskDraft)
-                        .textInputAutocapitalization(.sentences)
-                        .submitLabel(.done)
-                        .onSubmit(saveTask)
-                }
-
-                if !entry.isCompleted {
-                    Button(isEditingTask ? "Save" : "Edit") {
-                        if isEditingTask {
-                            saveTask()
+        ScrollView {
+            VStack(spacing: 16) {
+                // Task Card
+                OneThingCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        OneThingSectionHeader(title: "Task")
+                        
+                        if entry.isCompleted || !isEditingTask {
+                            Text(entry.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty ? "No task" : entry.taskText)
+                                .font(.title3)
+                                .fontWeight(.medium)
+                                .foregroundStyle(entry.taskText.isEmpty ? .secondary : .primary)
                         } else {
-                            taskDraft = entry.taskText
-                            isEditingTask = true
+                            TextField("Task", text: $taskDraft)
+                                .font(.title3)
+                                .textInputAutocapitalization(.sentences)
+                                .submitLabel(.done)
+                                .onSubmit(saveTask)
+                        }
+
+                        if !entry.isCompleted {
+                            Button {
+                                if isEditingTask {
+                                    saveTask()
+                                } else {
+                                    taskDraft = entry.taskText
+                                    isEditingTask = true
+                                }
+                            } label: {
+                                Label(isEditingTask ? "Save" : "Edit", systemImage: isEditingTask ? "checkmark" : "pencil")
+                                    .font(.subheadline.weight(.medium))
+                            }
+                            .buttonStyle(.bordered)
+                            .buttonBorderShape(.capsule)
                         }
                     }
                 }
-            }
 
-            Section("Time") {
-                LabeledContent("Total") {
-                    Text(DurationFormatter.timer(entry.totalElapsedSeconds()))
-                        .monospacedDigit()
-                }
-            }
-
-            Section("Status") {
-                if let completedAt = entry.completedAt {
-                    LabeledContent("Completed") {
-                        Text(completedAt.formatted(date: .abbreviated, time: .shortened))
+                // Time Card
+                OneThingCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        OneThingSectionHeader(title: "Time")
+                        
+                        HStack(spacing: 16) {
+                            // Timer icon
+                            ZStack {
+                                Circle()
+                                    .fill(Color.accentColor.opacity(0.15))
+                                    .frame(width: 48, height: 48)
+                                
+                                Image(systemName: "timer")
+                                    .font(.title3)
+                                    .foregroundStyle(Color.accentColor)
+                            }
+                            
+                            VStack(alignment: .leading, spacing: 2) {
+                                Text("Total Duration")
+                                    .font(.caption)
+                                    .foregroundStyle(.secondary)
+                                Text(DurationFormatter.timer(entry.totalElapsedSeconds()))
+                                    .font(.title2.weight(.semibold))
+                                    .monospacedDigit()
+                            }
+                        }
                     }
-                } else {
-                    Text("Not done")
-                        .foregroundStyle(.secondary)
-                }
-            }
-
-            Section {
-                Button("Copy to Today") {
-                    copyToToday()
                 }
 
-                Button("Delete Day", role: .destructive) {
-                    showDeleteConfirmation = true
+                // Status Card
+                OneThingCard {
+                    VStack(alignment: .leading, spacing: 12) {
+                        OneThingSectionHeader(title: "Status")
+                        
+                        if let completedAt = entry.completedAt {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(
+                                            LinearGradient(
+                                                colors: [.green, .mint],
+                                                startPoint: .topLeading,
+                                                endPoint: .bottomTrailing
+                                            )
+                                        )
+                                        .frame(width: 44, height: 44)
+                                        .shadow(color: .green.opacity(0.3), radius: 6, x: 0, y: 3)
+                                    
+                                    Image(systemName: "checkmark")
+                                        .font(.title3.weight(.bold))
+                                        .foregroundStyle(.white)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("Completed")
+                                        .font(.headline)
+                                    Text(completedAt.formatted(date: .abbreviated, time: .shortened))
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        } else {
+                            HStack(spacing: 14) {
+                                ZStack {
+                                    Circle()
+                                        .fill(Color.orange.opacity(0.15))
+                                        .frame(width: 44, height: 44)
+                                    
+                                    Image(systemName: "clock")
+                                        .font(.title3)
+                                        .foregroundStyle(.orange)
+                                }
+                                
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text("In Progress")
+                                        .font(.headline)
+                                    Text("Not completed yet")
+                                        .font(.footnote)
+                                        .foregroundStyle(.secondary)
+                                }
+                            }
+                        }
+                    }
+                }
+
+                // Actions Card
+                OneThingCard(isElevated: false) {
+                    VStack(spacing: 12) {
+                        Button {
+                            copyToToday()
+                        } label: {
+                            Label("Copy to Today", systemImage: "doc.on.doc")
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.roundedRectangle(radius: 12))
+
+                        Button(role: .destructive) {
+                            showDeleteConfirmation = true
+                        } label: {
+                            Label("Delete Day", systemImage: "trash")
+                                .font(.subheadline.weight(.medium))
+                                .frame(maxWidth: .infinity, minHeight: 44)
+                        }
+                        .buttonStyle(.bordered)
+                        .buttonBorderShape(.roundedRectangle(radius: 12))
+                        .tint(.red)
+                    }
                 }
             }
+            .padding(.horizontal, 16)
+            .padding(.vertical, 8)
         }
+        .oneThingScreenBackground()
         .navigationTitle(entry.day.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

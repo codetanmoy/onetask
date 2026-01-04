@@ -5,7 +5,7 @@ struct RootView: View {
     @AppStorage(UserPreferences.onboardingCompleteKey) private var onboardingComplete: Bool = false
 
     var body: some View {
-        ZStack {
+        if onboardingComplete {
             TabView {
                 NavigationStack {
                     HomeView()
@@ -28,13 +28,8 @@ struct RootView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
             }
-            .navigationTitle("One Task")
-
-            if !onboardingComplete {
-                OnboardingView(isComplete: $onboardingComplete)
-                    .transition(.opacity)
-                    .zIndex(1)
-            }
+        } else {
+            OnboardingView(isComplete: $onboardingComplete)
         }
     }
 }

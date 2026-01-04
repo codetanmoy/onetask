@@ -31,8 +31,15 @@ enum LiveActivityService {
             restoreIfNeeded(for: entry)
         }
 
-        // If the entry is not running, ensure activity is ended
-        guard entry.isRunning else {
+        // If completed, end the activity
+        if entry.isCompleted {
+            await end()
+            return
+        }
+        
+        // Check if task has content
+        let hasTask = !entry.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
+        guard hasTask else {
             await end()
             return
         }
@@ -43,10 +50,12 @@ enum LiveActivityService {
         }
 
         let attributes = OneThingActivityAttributes(taskIdentifier: entry.id.uuidString)
+        
+        // Create content state - works for both running and paused
         let contentState = OneThingActivityAttributes.ContentState(
             taskText: entry.taskText,
             elapsedSeconds: entry.elapsedSeconds,
-            startedAt: entry.startedAt
+            startedAt: entry.startedAt  // nil when paused, Date when running
         )
 
         if let activity = currentActivity {
@@ -58,6 +67,11 @@ enum LiveActivityService {
         if let existing = activity(matching: entry) {
             currentActivity = existing
             await existing.update(.init(state: contentState, staleDate: nil))
+            return
+        }
+
+        // Only start a new activity if there's actual timer activity (running or previously run)
+        guard entry.isRunning || entry.elapsedSeconds > 0 else {
             return
         }
 
@@ -86,4 +100,21 @@ enum LiveActivityService {
         }
         currentActivity = nil
     }
+    
+    /// Force update the Live Activity with specific state (used by widget action callbacks)
+    static func forceUpdate(taskText: String, elapsedSeconds: Int, isRunning: Bool) async {
+        guard let activity = currentActivity ?? Activity<OneThingActivityAttributes>.activities.first else {
+            return
+        }
+        
+        let contentState = OneThingActivityAttributes.ContentState(
+            taskText: taskText,
+            elapsedSeconds: elapsedSeconds,
+            startedAt: isRunning ? Date() : nil
+        )
+        
+        await activity.update(.init(state: contentState, staleDate: nil))
+        currentActivity = activity
+    }
 }
+
