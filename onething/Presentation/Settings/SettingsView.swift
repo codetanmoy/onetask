@@ -9,6 +9,9 @@ struct SettingsView: View {
     @AppStorage(UserPreferences.hapticsEnabledKey) private var hapticsEnabled: Bool = true
     @AppStorage(UserPreferences.morningReminderEnabledKey) private var morningReminderEnabled: Bool = false
     @AppStorage(UserPreferences.eveningReminderEnabledKey) private var eveningReminderEnabled: Bool = false
+    @AppStorage(UserPreferences.dailyReengagementEnabledKey) private var dailyReengagementEnabled: Bool = false
+    @AppStorage(UserPreferences.hourlyProgressNotificationsEnabledKey) private var hourlyProgressNotificationsEnabled: Bool = false
+    @AppStorage(UserPreferences.streakProtectionEnabledKey) private var streakProtectionEnabled: Bool = false
     
     @State private var notificationPermissionGranted = false
 
@@ -87,6 +90,65 @@ struct SettingsView: View {
                                         } else {
                                             eveningReminderEnabled = false
                                             NotificationService.cancelEveningReminder()
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                        
+                        Divider()
+                        
+                        SettingsToggleRow(
+                            icon: "bell.badge",
+                            title: "Daily Re-engagement",
+                            subtitle: "Remind me if I haven't opened the app",
+                            isOn: Binding(
+                                get: { dailyReengagementEnabled },
+                                set: { newValue in
+                                    Task {
+                                        if newValue {
+                                            let granted = await NotificationService.requestAuthorizationIfNeeded()
+                                            if granted {
+                                                dailyReengagementEnabled = true
+                                                NotificationService.scheduleDailyReengagement()
+                                            }
+                                        } else {
+                                            dailyReengagementEnabled = false
+                                            NotificationService.cancelDailyReengagement()
+                                        }
+                                    }
+                                }
+                            )
+                        )
+                        
+                        Divider()
+                        
+                        SettingsToggleRow(
+                            icon: "clock.badge.checkmark",
+                            title: "Hourly Progress",
+                            subtitle: "Celebrate each hour of focus time",
+                            isOn: $hourlyProgressNotificationsEnabled
+                        )
+                        
+                        Divider()
+                        
+                        SettingsToggleRow(
+                            icon: "flame.fill",
+                            title: "Streak Protection",
+                            subtitle: "Don't let your streak break",
+                            isOn: Binding(
+                                get: { streakProtectionEnabled },
+                                set: { newValue in
+                                    Task {
+                                        if newValue {
+                                            let granted = await NotificationService.requestAuthorizationIfNeeded()
+                                            if granted {
+                                                streakProtectionEnabled = true
+                                                // Streak protection will be scheduled dynamically when needed
+                                            }
+                                        } else {
+                                            streakProtectionEnabled = false
+                                            NotificationService.cancelStreakProtection()
                                         }
                                     }
                                 }

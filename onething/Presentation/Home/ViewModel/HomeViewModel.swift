@@ -7,6 +7,7 @@ struct HomeOptions: Equatable {
     var retentionDays: Int
     var dailyResetEnabled: Bool
     var hapticsEnabled: Bool
+    var hourlyProgressNotificationsEnabled: Bool
 }
 
 @MainActor
@@ -61,7 +62,10 @@ final class HomeViewModel: ObservableObject {
             if entry.isRunning {
                 TimerService.stop(entry: entry)
             } else {
-                TimerService.start(entry: entry)
+                TimerService.start(
+                    entry: entry,
+                    progressNotificationsEnabled: options.hourlyProgressNotificationsEnabled
+                )
             }
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()

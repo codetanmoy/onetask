@@ -11,6 +11,7 @@ struct HomeView: View {
     @AppStorage(UserPreferences.retentionDaysKey) private var retentionDays: Int = Constants.defaultRetentionDays
     @AppStorage(UserPreferences.dailyResetEnabledKey) private var dailyResetEnabled: Bool = true
     @AppStorage(UserPreferences.hapticsEnabledKey) private var hapticsEnabled: Bool = true
+    @AppStorage(UserPreferences.hourlyProgressNotificationsEnabledKey) private var hourlyProgressNotificationsEnabled: Bool = false
 
     var body: some View {
         homeScaffold
@@ -97,7 +98,8 @@ struct HomeView: View {
         HomeOptions(
             retentionDays: retentionDays,
             dailyResetEnabled: dailyResetEnabled,
-            hapticsEnabled: hapticsEnabled
+            hapticsEnabled: hapticsEnabled,
+            hourlyProgressNotificationsEnabled: hourlyProgressNotificationsEnabled
         )
     }
 

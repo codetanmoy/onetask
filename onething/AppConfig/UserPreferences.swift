@@ -9,4 +9,7 @@ enum UserPreferences {
     // Notification preferences
     static let morningReminderEnabledKey = "morningReminderEnabled"
     static let eveningReminderEnabledKey = "eveningReminderEnabled"
+    static let dailyReengagementEnabledKey = "dailyReengagementEnabled"
+    static let hourlyProgressNotificationsEnabledKey = "hourlyProgressNotificationsEnabled"
+    static let streakProtectionEnabledKey = "streakProtectionEnabled"
 }
