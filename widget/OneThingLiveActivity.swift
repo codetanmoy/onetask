@@ -25,9 +25,9 @@ struct OneThingLiveActivity: Widget {
             DynamicIsland {
                 // Expanded view - task focused
                 DynamicIslandExpandedRegion(.leading) {
-                    Image(systemName: "flame.fill")
-                        .font(.title2)
-                        .foregroundStyle(.orange)
+                    Image(systemName: "timer")
+                        .font(.title2.weight(.medium))
+                        .foregroundStyle(.white)
                         .symbolEffect(.pulse.wholeSymbol, options: .repeating)
                         .frame(width: 44, height: 44)
                 }
@@ -55,7 +55,7 @@ struct OneThingLiveActivity: Widget {
                         
                         HStack(spacing: 4) {
                             Circle()
-                                .fill(context.state.startedAt != nil ? .green : .orange)
+                                .fill(context.state.startedAt != nil ? .white : .secondary)
                                 .frame(width: 6, height: 6)
                             Text(context.state.startedAt != nil ? "Focus" : "Paused")
                                 .font(.caption2)
@@ -65,14 +65,14 @@ struct OneThingLiveActivity: Widget {
                 }
                 
             } compactLeading: {
-                // Compact leading - flame icon
-                Image(systemName: "flame.fill")
-                    .font(.body)
-                    .foregroundStyle(.orange)
+                // Compact leading - timer icon
+                Image(systemName: "timer")
+                    .font(.system(size: 14, weight: .medium))
+                    .foregroundStyle(.white)
                 
             } compactTrailing: {
                 // Compact trailing - timer
-                HStack{
+                HStack {
                     if let startedAt = context.state.startedAt {
                         let adjustedStart = startedAt.addingTimeInterval(TimeInterval(-context.state.elapsedSeconds))
                         Text(timerInterval: adjustedStart...Date.distantFuture, countsDown: false)
@@ -92,10 +92,10 @@ struct OneThingLiveActivity: Widget {
                 }
            
             } minimal: {
-                // Minimal - just flame icon
-                Image(systemName: "flame.fill")
-                    .font(.body)
-                    .foregroundStyle(.orange)
+                // Minimal - timer icon
+                Image(systemName: "timer")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(.white)
             }
             .widgetURL(URL(string: "onething://home"))
         }
@@ -107,15 +107,9 @@ struct OneThingLiveActivity: Widget {
 private struct ExpandedLeadingView: View {
     var body: some View {
         HStack(spacing: 8) {
-            Image(systemName: "flame.fill")
+            Image(systemName: "circle.fill")
                 .font(.title2)
-                .foregroundStyle(
-                    LinearGradient(
-                        colors: [.orange, .red],
-                        startPoint: .top,
-                        endPoint: .bottom
-                    )
-                )
+                .foregroundStyle(.primary)
                 .symbolEffect(.pulse.wholeSymbol, options: .repeating)
             
             Text("Focus")
@@ -160,15 +154,9 @@ private struct ExpandedBottomView: View {
 
 private struct CompactLeadingView: View {
     var body: some View {
-        Image(systemName: "flame.fill")
+        Image(systemName: "circle.fill")
             .font(.system(size: 14, weight: .semibold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [.orange, .red],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .foregroundStyle(.primary)
     }
 }
 
@@ -188,15 +176,9 @@ private struct CompactTrailingView: View {
 
 private struct MinimalView: View {
     var body: some View {
-        Image(systemName: "flame.fill")
+        Image(systemName: "circle.fill")
             .font(.system(size: 12, weight: .bold))
-            .foregroundStyle(
-                LinearGradient(
-                    colors: [.orange, .red],
-                    startPoint: .top,
-                    endPoint: .bottom
-                )
-            )
+            .foregroundStyle(.primary)
     }
 }
 
@@ -231,27 +213,16 @@ struct LockScreenBannerView: View {
                     Circle()
                         .trim(from: 0, to: progressValue)
                         .stroke(
-                            LinearGradient(
-                                colors: isRunning ? [.orange, .red] : [.gray, .gray.opacity(0.7)],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            ),
+                            Color.white.opacity(isRunning ? 1 : 0.5),
                             style: StrokeStyle(lineWidth: 4, lineCap: .round)
                         )
                         .frame(width: 56, height: 56)
                         .rotationEffect(.degrees(-90))
                     
-                    Image(systemName: isRunning ? "flame.fill" : "pause.fill")
+                    Image(systemName: isRunning ? "timer" : "pause.fill")
                         .font(.title2.weight(.semibold))
-                        .foregroundStyle(
-                            LinearGradient(
-                                colors: isRunning ? [.orange, .red] : [.gray, .gray],
-                                startPoint: .top,
-                                endPoint: .bottom
-                            )
-                        )
+                        .foregroundStyle(.white.opacity(isRunning ? 1 : 0.7))
                         .scaleEffect(isRunning && isPulsing ? 1.1 : 1.0)
-                        .shadow(color: isRunning ? .orange.opacity(0.5) : .clear, radius: isPulsing ? 8 : 4)
                 }
                 .onAppear {
                     withAnimation(.easeInOut(duration: 1.0).repeatForever(autoreverses: true)) {
@@ -270,7 +241,7 @@ struct LockScreenBannerView: View {
                     HStack(spacing: 8) {
                         HStack(spacing: 4) {
                             Circle()
-                                .fill(isRunning ? .green : .orange)
+                                .fill(isRunning ? Color.primary : Color.secondary)
                                 .frame(width: 6, height: 6)
                             Text(isRunning ? "Focus" : "Paused")
                                 .font(.caption2)
@@ -295,24 +266,24 @@ struct LockScreenBannerView: View {
                 
                 Spacer(minLength: 8)
                 
-                // Right: Action buttons
+                // Right: Action buttons - black/white style
                 VStack(spacing: 8) {
                     if isRunning {
                         Button(intent: PauseTimerIntent()) {
                             Image(systemName: "pause.fill")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.black)
                                 .frame(width: 36, height: 36)
-                                .background(Circle().fill(.orange))
+                                .background(Circle().fill(.white))
                         }
                         .buttonStyle(.plain)
                     } else {
                         Button(intent: ResumeTimerIntent()) {
                             Image(systemName: "play.fill")
                                 .font(.subheadline.weight(.semibold))
-                                .foregroundStyle(.white)
+                                .foregroundStyle(.black)
                                 .frame(width: 36, height: 36)
-                                .background(Circle().fill(.blue))
+                                .background(Circle().fill(.white))
                         }
                         .buttonStyle(.plain)
                     }
@@ -322,7 +293,7 @@ struct LockScreenBannerView: View {
                             .font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .frame(width: 36, height: 36)
-                            .background(Circle().fill(.green))
+                            .background(Circle().strokeBorder(.white, lineWidth: 2))
                     }
                     .buttonStyle(.plain)
                 }
@@ -330,7 +301,7 @@ struct LockScreenBannerView: View {
             .padding(.horizontal, 16)
             .padding(.vertical, 14)
         }
-        .activityBackgroundTint(Color(.systemBackground).opacity(0.95))
+        .activityBackgroundTint(Color.black.opacity(0.95))
     }
     
     private var progressValue: Double {

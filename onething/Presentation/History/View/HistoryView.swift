@@ -19,6 +19,7 @@ struct HistoryView: View {
                     displayedComponents: [.date]
                 )
                 .datePickerStyle(.graphical)
+                .tint(.primary)
             }
 
             Section {
@@ -26,12 +27,12 @@ struct HistoryView: View {
                     VStack(spacing: 16) {
                         ZStack {
                             Circle()
-                                .fill(.tint.opacity(0.1))
+                                .fill(Color(.secondarySystemBackground))
                                 .frame(width: 64, height: 64)
                             
                             Image(systemName: "calendar.badge.clock")
                                 .font(.title)
-                                .foregroundStyle(.tint)
+                                .foregroundStyle(.secondary)
                         }
                         
                         VStack(spacing: 4) {
@@ -70,11 +71,9 @@ struct HistoryView: View {
         .id(refreshToken)
         .navigationTitle("History")
         .refreshable {
-            // SwiftData/@Query usually updates automatically; this forces a re-evaluation and is a good UX affordance.
             refreshToken = UUID()
         }
         .onAppear {
-            // Default to the most recent day that has entries (within retention), otherwise today.
             if let newestDay = filteredEntries.last?.day {
                 selectedDate = newestDay
             } else {
@@ -128,6 +127,7 @@ struct HistoryView: View {
         try? modelContext.save()
     }
 }
+
 #Preview {
     NavigationStack {
         HistoryView()

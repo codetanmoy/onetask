@@ -29,6 +29,23 @@ struct HomeTimelineContent: View {
                     .foregroundStyle(.secondary)
                     .padding(.top, 4)
 
+                // Streak display with loss aversion psychology
+                if viewModel.state.streakDays > 0 {
+                    if isCompleted && viewModel.state.previousStreakDays < viewModel.state.streakDays {
+                        // Show celebration when streak increments
+                        StreakCelebration(
+                            oldStreak: viewModel.state.previousStreakDays,
+                            newStreak: viewModel.state.streakDays
+                        )
+                        .frame(maxWidth: .infinity, alignment: .center)
+                    } else {
+                        StreakBadge(
+                            streakDays: viewModel.state.streakDays,
+                            isAtRisk: viewModel.state.streakAtRisk
+                        )
+                    }
+                }
+
                 OneThingCard {
                     HomeTaskBlock(entry: entry, isCompleted: isCompleted, options: options, viewModel: viewModel)
                 }

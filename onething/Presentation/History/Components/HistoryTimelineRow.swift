@@ -10,22 +10,22 @@ struct HistoryTimelineRow: View {
 
     var body: some View {
         HStack(alignment: .center, spacing: 14) {
-            // Status icon with colored background
+            // Status icon - pure black/white
             ZStack {
                 Circle()
-                    .fill(entry.isCompleted ? Color.green.opacity(0.15) : Color.orange.opacity(0.15))
+                    .fill(entry.isCompleted ? Color.primary.opacity(0.1) : Color(.tertiarySystemFill))
                     .frame(width: 40, height: 40)
                 
-                Image(systemName: entry.isCompleted ? "checkmark" : "clock")
+                Image(systemName: entry.isCompleted ? "checkmark" : "circle")
                     .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(entry.isCompleted ? .green : .orange)
+                    .foregroundStyle(entry.isCompleted ? .primary : .tertiary)
             }
             
             VStack(alignment: .leading, spacing: 4) {
                 Text(taskDisplayText)
                     .font(.body)
                     .fontWeight(.medium)
-                    .foregroundStyle(.primary)
+                    .foregroundStyle(entry.isCompleted ? .primary : .secondary)
                     .lineLimit(1)
 
                 HStack(spacing: 8) {
@@ -37,7 +37,7 @@ struct HistoryTimelineRow: View {
                         Image(systemName: "clock")
                     }
                     .font(.caption)
-                    .foregroundStyle(.secondary)
+                    .foregroundStyle(.tertiary)
                     
                     // Duration
                     Text("•")
@@ -45,27 +45,19 @@ struct HistoryTimelineRow: View {
                     
                     Text(DurationFormatter.compact(entry.totalElapsedSeconds()))
                         .font(.caption)
-                        .foregroundStyle(.secondary)
+                        .foregroundStyle(.tertiary)
                         .monospacedDigit()
                 }
             }
 
             Spacer(minLength: 0)
             
-            // Status badge
-            Text(entry.isCompleted ? "Done" : "Open")
-                .font(.caption2.weight(.semibold))
-                .foregroundStyle(entry.isCompleted ? .green : .orange)
-                .padding(.horizontal, 10)
-                .padding(.vertical, 5)
-                .background(
-                    Capsule()
-                        .fill(entry.isCompleted ? Color.green.opacity(0.12) : Color.orange.opacity(0.12))
-                        .overlay(
-                            Capsule()
-                                .strokeBorder(entry.isCompleted ? Color.green.opacity(0.2) : Color.orange.opacity(0.2), lineWidth: 1)
-                        )
-                )
+            // Minimal status indicator
+            if entry.isCompleted {
+                Image(systemName: "checkmark")
+                    .font(.caption.weight(.bold))
+                    .foregroundStyle(.primary)
+            }
         }
         .padding(.vertical, 6)
     }
@@ -77,4 +69,3 @@ struct HistoryTimelineRow: View {
         HistoryTimelineRow(entry: DayEntry(day: Calendar.current.startOfDay(for: .now), taskText: "", elapsedSeconds: 0, completedAt: nil))
     }
 }
-

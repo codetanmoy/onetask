@@ -14,7 +14,7 @@ struct HomeView: View {
 
     var body: some View {
         homeScaffold
-            .overlay(alignment: .bottomTrailing) {
+            /*.overlay(alignment: .bottomTrailing) {
                 FloatingAssistantButton {
                     if reduceMotion {
                         isAssistantPresented = true
@@ -27,11 +27,20 @@ struct HomeView: View {
                 }
                 .padding(.trailing, 18)
                 .padding(.bottom, 18)
-            }
+            } */
         .fullScreenCover(isPresented: $isAssistantPresented) {
             //NavigationStack {
                 AssistantView()
             //}
+        }
+        // Milestone celebration overlay
+        .overlay {
+            if let milestone = viewModel.state.pendingMilestone {
+                CelebrationView(milestone: milestone) {
+                    MilestoneService.markMilestoneShown(milestone)
+                    viewModel.state.pendingMilestone = nil
+                }
+            }
         }
     }
 

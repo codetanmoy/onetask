@@ -28,6 +28,7 @@ struct RootView: View {
                     Label("Settings", systemImage: "gearshape")
                 }
             }
+            .tint(.primary) // Black/white tab bar tint
         } else {
             OnboardingView(isComplete: $onboardingComplete)
         }

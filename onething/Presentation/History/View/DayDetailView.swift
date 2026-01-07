@@ -50,6 +50,7 @@ struct DayDetailView: View {
                             }
                             .buttonStyle(.bordered)
                             .buttonBorderShape(.capsule)
+                            .tint(.primary)
                         }
                     }
                 }
@@ -60,15 +61,15 @@ struct DayDetailView: View {
                         OneThingSectionHeader(title: "Time")
                         
                         HStack(spacing: 16) {
-                            // Timer icon
+                            // Timer icon - black/white
                             ZStack {
                                 Circle()
-                                    .fill(Color.accentColor.opacity(0.15))
+                                    .fill(Color(.secondarySystemBackground))
                                     .frame(width: 48, height: 48)
                                 
                                 Image(systemName: "timer")
                                     .font(.title3)
-                                    .foregroundStyle(Color.accentColor)
+                                    .foregroundStyle(.primary)
                             }
                             
                             VStack(alignment: .leading, spacing: 2) {
@@ -92,19 +93,12 @@ struct DayDetailView: View {
                             HStack(spacing: 14) {
                                 ZStack {
                                     Circle()
-                                        .fill(
-                                            LinearGradient(
-                                                colors: [.green, .mint],
-                                                startPoint: .topLeading,
-                                                endPoint: .bottomTrailing
-                                            )
-                                        )
+                                        .fill(Color.primary)
                                         .frame(width: 44, height: 44)
-                                        .shadow(color: .green.opacity(0.3), radius: 6, x: 0, y: 3)
                                     
                                     Image(systemName: "checkmark")
                                         .font(.title3.weight(.bold))
-                                        .foregroundStyle(.white)
+                                        .foregroundStyle(colorScheme == .dark ? .black : .white)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
@@ -119,20 +113,21 @@ struct DayDetailView: View {
                             HStack(spacing: 14) {
                                 ZStack {
                                     Circle()
-                                        .fill(Color.orange.opacity(0.15))
+                                        .fill(Color(.secondarySystemBackground))
                                         .frame(width: 44, height: 44)
                                     
-                                    Image(systemName: "clock")
+                                    Image(systemName: "circle")
                                         .font(.title3)
-                                        .foregroundStyle(.orange)
+                                        .foregroundStyle(.tertiary)
                                 }
                                 
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text("In Progress")
                                         .font(.headline)
+                                        .foregroundStyle(.secondary)
                                     Text("Not completed yet")
                                         .font(.footnote)
-                                        .foregroundStyle(.secondary)
+                                        .foregroundStyle(.tertiary)
                                 }
                             }
                         }
@@ -151,6 +146,7 @@ struct DayDetailView: View {
                         }
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.roundedRectangle(radius: 12))
+                        .tint(.primary)
 
                         Button(role: .destructive) {
                             showDeleteConfirmation = true
@@ -161,14 +157,13 @@ struct DayDetailView: View {
                         }
                         .buttonStyle(.bordered)
                         .buttonBorderShape(.roundedRectangle(radius: 12))
-                        .tint(.red)
                     }
                 }
             }
             .padding(.horizontal, 16)
             .padding(.vertical, 8)
         }
-        .oneThingScreenBackground()
+        .background(Color(.systemBackground))
         .navigationTitle(entry.day.formatted(date: .abbreviated, time: .omitted))
         .navigationBarTitleDisplayMode(.inline)
         .onAppear {

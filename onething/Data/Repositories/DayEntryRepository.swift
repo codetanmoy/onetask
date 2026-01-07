@@ -58,10 +58,10 @@ enum DayEntryRepository {
 
     @MainActor
     static func fetchRecentEntries(context: ModelContext, limit: Int, now: Date = .now) throws -> [DayEntry] {
-        let today = Calendar.current.startOfDay(for: now)
+        // Fetch completed tasks (from any day, including today) sorted by completion date
         var descriptor = FetchDescriptor<DayEntry>(
-            predicate: #Predicate { $0.day < today },
-            sortBy: [SortDescriptor(\.day, order: .reverse)]
+            predicate: #Predicate { $0.completedAt != nil },
+            sortBy: [SortDescriptor(\.completedAt, order: .reverse)]
         )
         descriptor.fetchLimit = max(0, limit)
         return try context.fetch(descriptor)

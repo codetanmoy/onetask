@@ -18,7 +18,7 @@ struct HomeTaskBlock: View {
                     .font(.title2)
                     .fontWeight(.semibold)
             } else {
-                TextField("What’s the one thing?", text: taskDraftBinding)
+                TextField("What's the one thing?", text: taskDraftBinding)
                     .font(.title2)
                     .fontWeight(.semibold)
                     .textInputAutocapitalization(.sentences)
@@ -31,6 +31,15 @@ struct HomeTaskBlock: View {
                     .onSubmit {
                         viewModel.handle(.setTask(viewModel.state.taskDraft), context: modelContext, options: options)
                     }
+                
+                // Show suggestions when task is empty
+                if viewModel.state.taskDraft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty {
+                    TaskSuggestionChips(suggestions: viewModel.state.suggestions) { suggestion in
+                        viewModel.state.taskDraft = suggestion
+                        viewModel.handle(.setTask(suggestion), context: modelContext, options: options)
+                    }
+                    .padding(.top, 4)
+                }
             }
         }
     }
@@ -42,3 +51,4 @@ struct HomeTaskBlock: View {
         )
     }
 }
+

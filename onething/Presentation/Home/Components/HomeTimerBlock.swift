@@ -30,21 +30,21 @@ struct HomeTimerBlock: View {
                 Spacer(minLength: 0)
                 
                 if isRunning {
-                    // Premium pulsing running indicator
+                    // Minimal pulsing running indicator
                     HStack(spacing: 6) {
-                        PulsingIndicator(color: .green, size: 8)
+                        PulsingIndicator(color: .primary, size: 8)
                         Text("Running")
                             .font(.caption.weight(.semibold))
-                            .foregroundStyle(.green)
+                            .foregroundStyle(.primary)
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 8)
                     .background(
                         Capsule()
-                            .fill(.green.opacity(0.12))
+                            .fill(Color(.secondarySystemBackground))
                             .overlay(
                                 Capsule()
-                                    .strokeBorder(.green.opacity(0.3), lineWidth: 1)
+                                    .strokeBorder(Color.primary.opacity(0.2), lineWidth: 1)
                             )
                     )
                 }
@@ -80,7 +80,7 @@ struct HomeTimerBlock: View {
                     Text(DurationFormatter.timer(elapsedSeconds))
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                         .monospacedDigit()
-                        .foregroundStyle(timerTextGradient)
+                        .foregroundStyle(.primary)
                         .contentTransition(reduceMotion ? .identity : .numericText())
                         .animation(reduceMotion ? nil : .easeInOut(duration: 0.18), value: elapsedSeconds)
                     
@@ -100,7 +100,7 @@ struct HomeTimerBlock: View {
             if !hasTask {
                 HStack(spacing: 8) {
                     Image(systemName: "lightbulb.fill")
-                        .foregroundStyle(.orange)
+                        .foregroundStyle(.secondary)
                         .font(.footnote)
                     Text("Add a task to start the timer.")
                         .font(.footnote)
@@ -110,23 +110,9 @@ struct HomeTimerBlock: View {
                 .padding(.vertical, 10)
                 .background(
                     RoundedRectangle(cornerRadius: 10, style: .continuous)
-                        .fill(.orange.opacity(0.1))
+                        .fill(Color(.tertiarySystemBackground))
                 )
             }
-        }
-    }
-    
-    private var timerTextGradient: some ShapeStyle {
-        if isRunning {
-            return AnyShapeStyle(
-                LinearGradient(
-                    colors: [.green, .mint],
-                    startPoint: .topLeading,
-                    endPoint: .bottomTrailing
-                )
-            )
-        } else {
-            return AnyShapeStyle(Color.primary)
         }
     }
 

@@ -29,6 +29,8 @@ final class HomeViewModel: ObservableObject {
                 )
                 state.taskDraft = entry?.taskText ?? ""
                 recentEntries = try DayEntryRepository.fetchRecentEntries(context: context, limit: 5)
+                refreshStreak(context: context)
+                refreshSuggestions(context: context)
                 try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
                 Task {
                     if let entry = entry {
@@ -85,10 +87,19 @@ final class HomeViewModel: ObservableObject {
             if entry.isRunning {
                 TimerService.stop(entry: entry)
             }
+            // Save previous streak for celebration animation
+            state.previousStreakDays = state.streakDays
             entry.completedAt = .now
             entry.updatedAt = .now
             HapticsService.success(enabled: options.hapticsEnabled)
             try? context.save()
+            // Refresh recent entries to show newly completed task
+            recentEntries = (try? DayEntryRepository.fetchRecentEntries(context: context, limit: 5)) ?? []
+            refreshStreak(context: context)
+            // Check for milestone achievements
+            checkForMilestone(context: context)
+            // Cancel evening reminder since task is complete
+            NotificationService.cancelEveningReminder()
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             Task {
                 await LiveActivityService.sync(entry: entry)
@@ -103,6 +114,7 @@ final class HomeViewModel: ObservableObject {
             entry.updatedAt = .now
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? context.save()
+            refreshStreak(context: context)
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             Task {
                 await LiveActivityService.sync(entry: entry)
@@ -126,6 +138,34 @@ final class HomeViewModel: ObservableObject {
             HapticsService.lightImpact(enabled: options.hapticsEnabled)
             try? WidgetSnapshotService.updateSnapshot(context: context, dailyResetEnabled: options.dailyResetEnabled)
             objectWillChange.send()
+        }
+    }
+
+    private func refreshStreak(context: ModelContext) {
+        do {
+            let streakInfo = try StreakService.calculateStreak(context: context)
+            state.streakDays = streakInfo.currentDays
+            state.streakAtRisk = streakInfo.isAtRisk
+        } catch {
+            LoggingService.log("Failed to calculate streak: \(error)")
+        }
+    }
+
+    private func checkForMilestone(context: ModelContext) {
+        do {
+            if let milestone = try MilestoneService.checkForNewMilestone(context: context) {
+                state.pendingMilestone = milestone
+            }
+        } catch {
+            LoggingService.log("Failed to check milestones: \(error)")
+        }
+    }
+
+    private func refreshSuggestions(context: ModelContext) {
+        do {
+            state.suggestions = try TaskSuggestionService.generateSuggestions(context: context)
+        } catch {
+            LoggingService.log("Failed to load suggestions: \(error)")
         }
     }
 

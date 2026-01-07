@@ -36,29 +36,21 @@ struct HomeDoneBlock: View {
         VStack(alignment: .leading, spacing: 14) {
             OneThingSectionHeader(title: "Completed")
 
-            // Celebration card
+            // Minimal completion card
             HStack(alignment: .center, spacing: 14) {
-                // Animated checkmark
                 ZStack {
                     Circle()
-                        .fill(
-                            LinearGradient(
-                                colors: [.green, .mint],
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
+                        .fill(Color.primary)
                         .frame(width: 44, height: 44)
-                        .shadow(color: .green.opacity(0.4), radius: 8, x: 0, y: 4)
                     
                     Image(systemName: "checkmark")
                         .font(.title3.weight(.bold))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(colorScheme == .dark ? .black : .white)
                         .symbolEffect(.bounce, value: showCelebration)
                 }
 
                 VStack(alignment: .leading, spacing: 4) {
-                    Text("Well done! 🎉")
+                    Text("Well done!")
                         .font(.headline)
                         .foregroundStyle(.primary)
                     Text(completedAt.formatted(date: .abbreviated, time: .shortened))
@@ -71,11 +63,7 @@ struct HomeDoneBlock: View {
             .padding(14)
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(.green.opacity(colorScheme == .dark ? 0.15 : 0.08))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 14, style: .continuous)
-                            .strokeBorder(.green.opacity(0.2), lineWidth: 1)
-                    )
+                    .fill(Color(.secondarySystemBackground))
             )
             .onAppear {
                 if !reduceMotion {
@@ -86,11 +74,7 @@ struct HomeDoneBlock: View {
             }
 
             // Start another task button
-            premiumButton(
-                title: "Start Another Task",
-                icon: "plus.circle.fill",
-                gradient: [.accentColor, .accentColor.opacity(0.8)]
-            ) {
+            MinimalButton(title: "Start Another Task", icon: "plus") {
                 runAnimated {
                     viewModel.handle(.startAnotherTask, context: modelContext, options: options)
                 }
@@ -104,9 +88,9 @@ struct HomeDoneBlock: View {
             OneThingSectionHeader(title: "Next")
             
             HStack(spacing: 10) {
-                Image(systemName: "arrow.up.circle.fill")
-                    .foregroundStyle(.secondary)
-                    .font(.title3)
+                Image(systemName: "arrow.up")
+                    .foregroundStyle(.tertiary)
+                    .font(.footnote)
                 Text("Add your one thing above to begin.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
@@ -115,7 +99,7 @@ struct HomeDoneBlock: View {
             .frame(maxWidth: .infinity, alignment: .leading)
             .background(
                 RoundedRectangle(cornerRadius: 12, style: .continuous)
-                    .fill(Color(.tertiarySystemGroupedBackground))
+                    .fill(Color(.secondarySystemBackground))
             )
         }
     }
@@ -125,30 +109,20 @@ struct HomeDoneBlock: View {
         VStack(alignment: .leading, spacing: 14) {
             OneThingSectionHeader(title: "Next")
             
-            Text("Pause when you need a break, or complete when the work is done.")
+            Text("Pause when you need a break, or complete when done.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
             HStack(spacing: 12) {
-                // Pause button
-                premiumButton(
-                    title: "Pause",
-                    icon: "pause.fill",
-                    gradient: [.orange, .orange.opacity(0.8)],
-                    isFullWidth: true
-                ) {
+                // Pause button - secondary
+                MinimalButton(title: "Pause", icon: "pause.fill", isPrimary: false) {
                     runAnimated {
                         viewModel.handle(.startStopTapped, context: modelContext, options: options)
                     }
                 }
 
-                // Complete button
-                premiumButton(
-                    title: "Complete",
-                    icon: "checkmark.circle.fill",
-                    gradient: [.green, .mint],
-                    isFullWidth: true
-                ) {
+                // Complete button - primary
+                MinimalButton(title: "Complete", icon: "checkmark") {
                     runAnimated {
                         viewModel.handle(.markDoneTapped, context: modelContext, options: options)
                     }
@@ -163,67 +137,20 @@ struct HomeDoneBlock: View {
             OneThingSectionHeader(title: "Next")
 
             Text(elapsedSeconds == 0 
-                 ? "Start the timer whenever you're ready, it will keep counting."
+                 ? "Start the timer whenever you're ready."
                  : "Resume the timer when you're ready.")
                 .font(.footnote)
                 .foregroundStyle(.secondary)
 
-            premiumButton(
+            MinimalButton(
                 title: elapsedSeconds == 0 ? "Start Timer" : "Resume Timer",
-                icon: "play.fill",
-                gradient: [.accentColor, .accentColor.opacity(0.8)]
+                icon: "play.fill"
             ) {
                 runAnimated {
                     viewModel.handle(.startStopTapped, context: modelContext, options: options)
                 }
             }
         }
-    }
-    
-    // MARK: - Premium Button
-    private func premiumButton(
-        title: String,
-        icon: String,
-        gradient: [Color],
-        isFullWidth: Bool = true
-    ) -> some View {
-        Button {
-            // Action handled by caller
-        } label: {
-            Label(title, systemImage: icon)
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: isFullWidth ? .infinity : nil, minHeight: 48)
-                .background(
-                    RoundedRectangle(cornerRadius: 14, style: .continuous)
-                        .fill(
-                            LinearGradient(
-                                colors: gradient,
-                                startPoint: .topLeading,
-                                endPoint: .bottomTrailing
-                            )
-                        )
-                        .shadow(color: gradient.first?.opacity(0.4) ?? .clear, radius: 8, x: 0, y: 4)
-                )
-                .foregroundStyle(.white)
-        }
-        .buttonStyle(.plain)
-    }
-    
-    // Actual action buttons
-    private func premiumButton(
-        title: String,
-        icon: String,
-        gradient: [Color],
-        isFullWidth: Bool = true,
-        action: @escaping () -> Void
-    ) -> some View {
-        Button(action: action) {
-            Label(title, systemImage: icon)
-                .font(.subheadline.weight(.semibold))
-                .frame(maxWidth: isFullWidth ? .infinity : nil, minHeight: 48)
-                .foregroundStyle(.white)
-        }
-        .buttonStyle(PremiumButtonStyle(gradient: gradient))
     }
 
     private func runAnimated(_ body: () -> Void) {
@@ -237,7 +164,31 @@ struct HomeDoneBlock: View {
     }
 }
 
-// MARK: - Premium Button Style
+// MARK: - Minimal Button (Black & White)
+struct MinimalButton: View {
+    let title: String
+    let icon: String
+    var isPrimary: Bool = true
+    let action: () -> Void
+    
+    @Environment(\.colorScheme) private var colorScheme
+    
+    var body: some View {
+        Button(action: action) {
+            Label(title, systemImage: icon)
+                .font(.subheadline.weight(.semibold))
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .foregroundStyle(isPrimary ? (colorScheme == .dark ? .black : .white) : .primary)
+                .background(
+                    RoundedRectangle(cornerRadius: 14, style: .continuous)
+                        .fill(isPrimary ? Color.primary : Color(.secondarySystemBackground))
+                )
+        }
+        .buttonStyle(.plain)
+    }
+}
+
+// MARK: - Premium Button Style (kept for compatibility)
 struct PremiumButtonStyle: ButtonStyle {
     let gradient: [Color]
     
@@ -245,19 +196,7 @@ struct PremiumButtonStyle: ButtonStyle {
         configuration.label
             .background(
                 RoundedRectangle(cornerRadius: 14, style: .continuous)
-                    .fill(
-                        LinearGradient(
-                            colors: gradient,
-                            startPoint: .topLeading,
-                            endPoint: .bottomTrailing
-                        )
-                    )
-                    .shadow(
-                        color: gradient.first?.opacity(configuration.isPressed ? 0.2 : 0.4) ?? .clear,
-                        radius: configuration.isPressed ? 4 : 8,
-                        x: 0,
-                        y: configuration.isPressed ? 2 : 4
-                    )
+                    .fill(Color.primary)
             )
             .scaleEffect(configuration.isPressed ? 0.97 : 1.0)
             .animation(.easeInOut(duration: 0.15), value: configuration.isPressed)
