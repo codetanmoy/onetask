@@ -13,11 +13,18 @@ struct HomeTimerBlock: View {
     let options: HomeOptions
     @ObservedObject var viewModel: HomeViewModel
     
-    // Timer progress based on 1 hour as full circle (adjustable)
+    
+    // Timer progress based on 1 hour as full circle - resets every hour
     private var timerProgress: Double {
         let targetSeconds = 3600.0 // 1 hour full circle
-        return min(Double(elapsedSeconds) / targetSeconds, 1.0)
+        let secondsInCurrentHour = Double(elapsedSeconds % 3600)
+        return secondsInCurrentHour / targetSeconds
     }
+    
+    private var completedHours: Int {
+        return elapsedSeconds / 3600
+    }
+
 
     var body: some View {
         let hasTask = entry?.taskText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty == false
@@ -77,6 +84,23 @@ struct HomeTimerBlock: View {
                 
                 // Timer text centered
                 VStack(spacing: 4) {
+                    // Hour badge for multi-hour sessions
+                    if completedHours > 0 {
+                        HStack(spacing: 4) {
+                            Image(systemName: "clock.fill")
+                                .font(.caption2)
+                            Text("×\(completedHours + 1)")
+                                .font(.caption.weight(.bold))
+                        }
+                        .foregroundStyle(.secondary)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 4)
+                        .background(
+                            Capsule()
+                                .fill(Color(.tertiarySystemBackground))
+                        )
+                    }
+                    
                     Text(DurationFormatter.timer(elapsedSeconds))
                         .font(.system(size: 44, weight: .bold, design: .rounded))
                         .monospacedDigit()

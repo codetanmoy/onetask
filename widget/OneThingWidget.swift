@@ -59,24 +59,18 @@ struct OneThingWidgetEntryView: View {
         ZStack {
             // Premium gradient background
             ContainerRelativeShape()
-                .fill(
-                    LinearGradient(
-                        colors: backgroundGradient,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color(.systemBackground))
             
             VStack(spacing: 8) {
                 // Status icon with glow
                 ZStack {
                     Circle()
-                        .fill(entry.snapshot.status.color.opacity(0.2))
+                        .fill(Color(.tertiarySystemFill))
                         .frame(width: 36, height: 36)
                     
                     Image(systemName: entry.snapshot.status.icon)
                         .font(.title3.weight(.semibold))
-                        .foregroundStyle(entry.snapshot.status.color)
+                        .foregroundStyle(.primary)
                 }
                 
                 Text(entry.snapshot.displayTask)
@@ -96,14 +90,12 @@ struct OneThingWidgetEntryView: View {
                             .font(.caption.weight(.semibold).monospacedDigit())
                     }
                 }
-                .foregroundStyle(entry.snapshot.status == .running ? .white : .secondary)
+                .foregroundStyle(.primary)
                 .padding(.horizontal, 10)
                 .padding(.vertical, 4)
                 .background(
                     Capsule()
-                        .fill(entry.snapshot.status == .running 
-                              ? entry.snapshot.status.color 
-                              : Color(.systemGray5))
+                        .fill(Color(.secondarySystemBackground))
                 )
             }
             .padding()
@@ -115,27 +107,21 @@ struct OneThingWidgetEntryView: View {
         ZStack {
             // Premium gradient background
             ContainerRelativeShape()
-                .fill(
-                    LinearGradient(
-                        colors: backgroundGradient,
-                        startPoint: .topLeading,
-                        endPoint: .bottomTrailing
-                    )
-                )
+                .fill(Color(.systemBackground))
             
             HStack(spacing: 16) {
                 // Left: Progress circle with timer
                 ZStack(alignment: .center) {
                     // Background circle
                     Circle()
-                        .stroke(Color(.systemGray4), lineWidth: 6)
+                        .stroke(Color(.tertiaryLabel), lineWidth: 6)
                         .frame(width: 80, height: 80)
                     
                     // Progress arc
                     Circle()
                         .trim(from: 0, to: progressValue)
                         .stroke(
-                            entry.snapshot.status.gradient,
+                            Color.primary,
                             style: StrokeStyle(lineWidth: 6, lineCap: .round)
                         )
                         .frame(width: 80, height: 80)
@@ -159,7 +145,7 @@ struct OneThingWidgetEntryView: View {
                         
                         if entry.snapshot.status == .running {
                             Circle()
-                                .fill(.green)
+                                .fill(Color.primary)
                                 .frame(width: 6, height: 6)
                         }
                     }
@@ -181,12 +167,12 @@ struct OneThingWidgetEntryView: View {
                         Text(entry.snapshot.status.label)
                             .font(.caption.weight(.medium))
                     }
-                    .foregroundStyle(entry.snapshot.status.color)
+                    .foregroundStyle(.primary)
                     .padding(.horizontal, 10)
                     .padding(.vertical, 5)
                     .background(
                         Capsule()
-                            .fill(entry.snapshot.status.color.opacity(0.15))
+                            .fill(Color(.tertiarySystemFill))
                     )
                 }
                 
@@ -261,16 +247,7 @@ struct OneThingWidgetEntryView: View {
     }
     
     private var backgroundGradient: [Color] {
-        switch entry.snapshot.status {
-        case .running:
-            return [Color(.systemBackground), Color.green.opacity(0.05)]
-        case .done:
-            return [Color(.systemBackground), Color.green.opacity(0.1)]
-        case .stopped:
-            return [Color(.systemBackground), Color.orange.opacity(0.05)]
-        case .noTask:
-            return [Color(.systemBackground), Color(.systemGray6)]
-        }
+        [Color(.systemBackground), Color(.systemBackground)]
     }
 
     private func timerString(_ seconds: Int) -> String {
@@ -368,9 +345,9 @@ enum WidgetStatus: String, Codable {
 
     var color: Color {
         switch self {
-        case .running: return .green
-        case .stopped: return .orange
-        case .done: return .green
+        case .running: return .primary
+        case .stopped: return .primary
+        case .done: return .primary
         case .noTask: return .secondary
         }
     }
@@ -385,32 +362,11 @@ enum WidgetStatus: String, Codable {
     }
     
     var gradient: LinearGradient {
-        switch self {
-        case .running:
-            return LinearGradient(
-                colors: [.green, .mint],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .stopped:
-            return LinearGradient(
-                colors: [.orange, .yellow],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .done:
-            return LinearGradient(
-                colors: [.green, .mint],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        case .noTask:
-            return LinearGradient(
-                colors: [.secondary, .secondary.opacity(0.7)],
-                startPoint: .topLeading,
-                endPoint: .bottomTrailing
-            )
-        }
+        LinearGradient(
+            colors: [.primary, .primary],
+            startPoint: .topLeading,
+            endPoint: .bottomTrailing
+        )
     }
 }
 

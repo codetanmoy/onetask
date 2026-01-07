@@ -27,7 +27,7 @@ struct StreakBadge: View {
         .padding(.vertical, 8)
         .background {
             RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.secondarySystemBackground))
+                .fill(Color(.systemGroupedBackground))
         }
     }
 }

@@ -69,10 +69,18 @@ enum StreakService {
         // Calculate longest streak ever
         let longestStreak = calculateLongestStreak(sortedDays: sortedDays.sorted(), calendar: calendar)
         
+        
         // Determine if streak is at risk
-        // At risk if: user had a streak yesterday but hasn't completed today yet
+        // At risk if: user had a streak yesterday, hasn't completed today, AND it's evening
         let yesterday = calendar.date(byAdding: .day, value: -1, to: today)!
-        let isAtRisk = currentStreak > 0 && !completedDays.contains(today) && completedDays.contains(yesterday)
+        let hasActiveStreak = currentStreak > 0 && completedDays.contains(yesterday)
+        let todayIncomplete = !completedDays.contains(today)
+        
+        // Only show "at risk" after 6 PM (18:00) to avoid being overly aggressive
+        let currentHour = calendar.component(.hour, from: now)
+        let isEvening = currentHour >= 18
+        
+        let isAtRisk = hasActiveStreak && todayIncomplete && isEvening
         
         let lastCompleted = sortedDays.first
         
