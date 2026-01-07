@@ -1,36 +1,144 @@
 import SwiftUI
 
-/// Displays streak count with "at risk" warning state - pure black/white theme
+/// Displays streak count with animated gradient flame - enhanced visual prominence
 struct StreakBadge: View {
     let streakDays: Int
     let isAtRisk: Bool
     
+    @State private var animationPhase: CGFloat = 0
+    
     var body: some View {
-        HStack(spacing: 6) {
-            Image(systemName: isAtRisk ? "exclamationmark.triangle.fill" : "flame.fill")
-                .foregroundStyle(isAtRisk ? .secondary : .primary)
-                .symbolEffect(.pulse, isActive: isAtRisk)
-            
-            VStack(alignment: .leading, spacing: 0) {
-                Text("\(streakDays) day streak")
-                    .font(.subheadline.weight(.semibold))
-                    .foregroundStyle(.primary)
-                
-                if isAtRisk {
-                    Text("Complete a task to keep it!")
-                        .font(.caption2)
-                        .foregroundStyle(.secondary)
-                }
-            }
+        HStack(spacing: 12) {
+            flameIcon
+            textContent
         }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 8)
-        .background {
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(.systemGroupedBackground))
+        .onAppear {
+            startAnimation()
         }
     }
+    
+    private var flameIcon: some View {
+        ZStack {
+            // Glow effect
+            Image(systemName: iconName)
+                .font(.title2)
+                .foregroundStyle(flameGradient)
+                .blur(radius: 8)
+                .opacity(0.6)
+            
+            // Main flame
+            Image(systemName: iconName)
+                .font(.title2)
+                .foregroundStyle(flameGradient)
+                .symbolEffect(.pulse, options: .repeating.speed(0.5), isActive: !isAtRisk)
+                .symbolEffect(.pulse, isActive: isAtRisk)
+        }
+        .scaleEffect(scaleAmount)
+    }
+    
+    private var textContent: some View {
+        VStack(alignment: .leading, spacing: 2) {
+            Text("\(streakDays) day streak")
+                .font(.headline.weight(.bold))
+                .foregroundStyle(.primary)
+            
+            if isAtRisk {
+                Text("Complete a task to keep it!")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+            }
+        }
+    }
+    
+    private var backgroundView: some View {
+        RoundedRectangle(cornerRadius: 14, style: .continuous)
+            .fill(Color(.secondarySystemBackground))
+    }
+    
+    private var iconName: String {
+        isAtRisk ? "exclamationmark.triangle.fill" : "flame.fill"
+    }
+    
+    private var scaleAmount: CGFloat {
+        1.0 + (isAtRisk ? 0 : animationPhase * 0.05)
+    }
+    
+    
+    
+    private var shadowColor: Color {
+        Color.primary.opacity(0.15)
+    }
+    
+    private func startAnimation() {
+        guard !isAtRisk else { return }
+        withAnimation(.easeInOut(duration: 2.0).repeatForever(autoreverses: true)) {
+            animationPhase = 1.0
+        }
+    }
+    
+    
+    
+    private var flameGradient: LinearGradient {
+        if isAtRisk {
+            // Gray gradient for at-risk state
+            return LinearGradient(
+                colors: [Color.secondary, Color.secondary.opacity(0.7)],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        } else {
+            // Animated black to gray gradient for active streak
+            let blackColor = Color.primary
+            let darkGray = Color.primary.opacity(0.7)
+            let lightGray = Color.primary.opacity(0.5)
+            
+            // Break down color interpolation to avoid compiler complexity
+            let midColor1 = interpolateColor(from: blackColor, to: darkGray, amount: animationPhase)
+            let midColor2 = interpolateColor(from: darkGray, to: lightGray, amount: animationPhase)
+            
+            return LinearGradient(
+                colors: [blackColor, midColor1, midColor2],
+                startPoint: .topLeading,
+                endPoint: .bottomTrailing
+            )
+        }
+    }
+    
+    private func interpolateColor(from: Color, to: Color, amount: CGFloat) -> Color {
+        let clampedAmount = max(0, min(1, amount))
+        let fromComponents = from.rgbaComponents
+        let toComponents = to.rgbaComponents
+        
+        return Color(
+            red: (1 - clampedAmount) * fromComponents.red + clampedAmount * toComponents.red,
+            green: (1 - clampedAmount) * fromComponents.green + clampedAmount * toComponents.green,
+            blue: (1 - clampedAmount) * fromComponents.blue + clampedAmount * toComponents.blue
+        )
+    }
 }
+
+// MARK: - Color Extension for Component Extraction
+extension Color {
+    var rgbaComponents: (red: Double, green: Double, blue: Double, alpha: Double) {
+        #if canImport(UIKit)
+        typealias NativeColor = UIColor
+        #elseif canImport(AppKit)
+        typealias NativeColor = NSColor
+        #endif
+        
+        var r: CGFloat = 0
+        var g: CGFloat = 0
+        var b: CGFloat = 0
+        var a: CGFloat = 0
+        
+        guard NativeColor(self).getRed(&r, green: &g, blue: &b, alpha: &a) else {
+            return (0, 0, 0, 1)
+        }
+        
+        return (Double(r), Double(g), Double(b), Double(a))
+    }
+}
+
 
 /// Large streak display for celebration moments - black/white theme
 struct StreakCelebration: View {

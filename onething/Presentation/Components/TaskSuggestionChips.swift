@@ -44,8 +44,8 @@ struct TaskSuggestionChips: View {
     
     private func colorFor(_ reason: TaskSuggestionService.Suggestion.SuggestionReason) -> Color {
         switch reason {
-        case .yesterday: return .orange
-        case .frequent: return .blue
+        case .yesterday: return .primary
+        case .frequent: return .primary
         case .verb: return .secondary
         }
     }
