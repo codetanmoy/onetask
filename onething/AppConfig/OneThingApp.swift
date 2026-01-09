@@ -1,12 +1,14 @@
 import SwiftUI
 import SwiftData
 import RevenueCat
+import Combine
 
 @main
 struct OneThingApp: App {
     
     init() {
-           Purchases.configure(withAPIKey: "test_yWMqEeVLRdJxWeNHAFFvoIhzCyI")
+          Purchases.logLevel = .info
+           Purchases.configure(withAPIKey: "appl_fYgLmLYCgFxkNjrCodmWHdKzHTM")
        }
     
     private let sharedModelContainer: ModelContainer = {
@@ -22,5 +24,18 @@ struct OneThingApp: App {
             RootView()
         }
         .modelContainer(sharedModelContainer)
+    }
+}
+
+// MARK: - 2) A simple entitlement gate
+
+final class EntitlementManager: ObservableObject {
+    // IMPORTANT: this must match your RevenueCat Entitlement Identifier exactly
+    static let entitlementID = "Release Offer"
+
+    @Published var isPro: Bool = false
+
+    func update(with info: CustomerInfo) {
+        isPro = info.entitlements[Self.entitlementID]?.isActive == true
     }
 }
